@@ -2,7 +2,6 @@ from fastapi import APIRouter
 from urllib.parse import unquote
 from logging import getLogger
 import subprocess
-subprocess.run(["ls", "-l"])
 
 root_router = APIRouter()
 
@@ -18,5 +17,8 @@ def take_path(path: str):
     return path
 
 @root_router.get("/search")
-    def get_search(find):
-        subprocess.run(["find", "/mnt", "-name", find])
+def get_search(find):
+    search = subprocess.Popen(["find", "/mnt", "-name", find], stderr=subprocess.PIPE)
+    output = search.stderr.read()
+
+    return output

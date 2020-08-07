@@ -1,0 +1,5 @@
+quick start:
+
+nohup uvicorn app.main:app --reload --host=0.0.0.0 --log-config logging.ini >> logs/dirlist.log &
+
+Runs on port 8000, url:8000/docs for documentation page.

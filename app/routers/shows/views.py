@@ -11,6 +11,7 @@ import os
 import json
 from os import path
 from logging import getLogger
+import pathlib
 
 from typing import List
 from fastapi import APIRouter, Query, Header, HTTPException
@@ -22,16 +23,17 @@ shows_router = APIRouter()
 
 # Define config and logger.
 CONFIG = configparser.ConfigParser()
-CONFIG.read('/projects/dirlist/conf/config.ini')
+CONFIG.read('/home/karan/projects/dirlist-api/conf/config.ini')
 SECTION = 'dirlist'
 PATH = CONFIG[SECTION]["path"]
+# PATH = app.CONFIG[SECTION]["path"]
 
 logger = getLogger("dirlist")
 
 # app.mount("/files", StaticFiles(directory="/shows"), name="shows")
 
-@shows_router.get("/")
-async def get_shows(q: List[str] = Query(None)):
+@shows_router.get("/folders")
+async def get_folders(path=""):
     '''
     Pass path as an array to function.
     Returns folders and files.
@@ -39,25 +41,31 @@ async def get_shows(q: List[str] = Query(None)):
 
     results = {}
 
-    logger.info("test")
+    logger.info("Loc: %s", path)
 
-    filename = q[-1]
-
-    query_items = {"q": q}
-    if query_items["q"]:
-        entry = PATH + "/".join(query_items["q"])
+    if path:
+        entry = PATH + "/" + path
+        logger.info(entry)
     else:
         entry = PATH
+    
+    logger.info("Path: %s", entry)
 
     if os.path.isfile(entry):
+        filename = path.split('/')[-1]
+        logger.info("is file")
         return download(entry, filename)
 
-    dirs = os.listdir(entry + "/")
+    dirs = os.listdir(entry)
     results["folders"] = [
-        val for val in dirs if os.path.isdir(entry + "/"+val)]
-    results["files"] = [val for val in dirs if os.path.isfile(entry + "/"+val)]
-    results["path_vars"] = query_items["q"]
+        val for val in dirs if os.path.isdir(entry + "/" + val)]
+    results["files"] = [val for val in dirs if os.path.isfile(entry + "/" + val)]
+    
+    results["path_vars"] = path.split("/")
+    results["path"] = path
 
+    if "" in results["path_vars"]:
+        results["path_vars"].remove("")
     return results
 
 def download(path, filename):
@@ -65,30 +73,21 @@ def download(path, filename):
         return FileResponse(path=path, media_type="application/octet-stream",filename=filename)
 
 @shows_router.get("/file")
-async def get_file(q: List[str] = Query(None)):
+async def get_file(path):
     '''
     Pass path to function.
     Returns folders and files.
     '''
 
-    query_items = {"q": q}
-    if query_items["q"]:
-        entry = PATH + "/".join(query_items["q"])
-    else:
-        entry = PATH
+    entry = PATH + path
+    logger.info("Folder: %s", entry)
+    logger.info("Filename: %s", entry.split('/')[-1])
     try:
         if os.path.isfile(entry):
-            return FileResponse(path=entry, filename=query_items["q"][-1])
+            logger.info("Path valid")
+            return FileResponse(path=entry, filename=path.split('/')[-1], media_type='application/octet-stream')
         else:
             return "Not a file."
-    except:
-        return "Not a path."
-
-# def main():
-#     '''
-#     Main function.
-#     '''
-#     uvicorn.run("dirlist:app", host="0.0.0.0", port=8000, reload=True)
-
-# if __name__ == '__main__':
-#     main()
+    except Exception as exp:
+        logger.exception(exp)
+        return "Exception has occured"

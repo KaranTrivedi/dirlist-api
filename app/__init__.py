@@ -14,12 +14,11 @@ origins = [
 
 # Define config and logger.
 CONFIG = configparser.ConfigParser()
-CONFIG.read('/projects/dirlist/conf/config.ini')
+CONFIG.read('/home/karan/projects/dirlist-api/conf/config.ini')
 SECTION = 'dirlist'
 PATH = CONFIG[SECTION]["path"]
 
 logger = logging.getLogger("root")
-
 
 def add_routes(app: FastAPI):
     logger.info("Mounting routes")
