@@ -3,8 +3,9 @@ import logging
 import os
 from fastapi import FastAPI
 
-from app.routers.views import root_router
-from app.routers.shows.views import shows_router
+from app.root.views import root_router
+
+from app.shows.views import shows_router
 from starlette.middleware.cors import CORSMiddleware
 
 origins = [
