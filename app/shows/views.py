@@ -8,13 +8,10 @@ Api for getting files and folders
 import configparser
 # Added
 import os
-import json
-from os import path
 from logging import getLogger
 import pathlib
 
-from typing import List
-from fastapi import APIRouter, Query, Header, HTTPException
+from fastapi import APIRouter
 from starlette.responses import FileResponse
 
 shows_router = APIRouter()
@@ -44,7 +41,7 @@ async def get_folders(path=""):
         # logger.info(entry)
     else:
         entry = PATH
-    
+
     if os.path.isdir(entry):
         results["valid"] = True
     else:
@@ -63,7 +60,7 @@ async def get_folders(path=""):
 
     results["folders"] = [val for val in dirs if os.path.isdir(entry + "/" + val)]
     results["files"] = [val for val in dirs if os.path.isfile(entry + "/" + val)]
-    
+
     results["path_vars"] = path.split("/")
     results["path"] = path
 
@@ -72,8 +69,12 @@ async def get_folders(path=""):
     return results
 
 def download(path, filename):
+    '''
+    Download file for given path.
+    '''
     if os.path.isfile(path):
         return FileResponse(path=path, filename=filename)
+    return None
 
 @shows_router.get("/file")
 async def get_file(path):
@@ -90,9 +91,8 @@ async def get_file(path):
         if os.path.isfile(entry):
             # logger.info("Path valid")
             return download(path=entry, filename=path.split('/')[-1])
-        else:
-            logger.error("Not a file.")
-            return "Not a file."
+        logger.error("Not a file.")
+        return "Not a file."
     except Exception as exp:
         logger.exception(exp)
         return "Exception has occured"
