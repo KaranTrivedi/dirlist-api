@@ -52,9 +52,8 @@ async def get_folders(path=""):
     # logger.info("Path: %s", entry)
 
     if os.path.isfile(entry):
-        filename = path.split('/')[-1]
         # logger.info("is file")
-        return download(entry, filename)
+        return download(entry)
 
     dirs = os.listdir(entry)
 
@@ -68,12 +67,12 @@ async def get_folders(path=""):
         results["path_vars"].remove("")
     return results
 
-def download(path, filename):
+def download(file_path):
     '''
     Download file for given path.
     '''
-    if os.path.isfile(path):
-        return FileResponse(path=path, filename=filename)
+    if os.path.isfile(file_path):
+        return FileResponse(path=file_path)
     return None
 
 @shows_router.get("/file")
@@ -90,7 +89,7 @@ async def get_file(path):
     try:
         if os.path.isfile(entry):
             # logger.info("Path valid")
-            return download(path=entry, filename=path.split('/')[-1])
+            return download(file_path=entry)
         logger.error("Not a file.")
         return "Not a file."
     except Exception as exp:
