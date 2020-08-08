@@ -15,7 +15,7 @@ import pathlib
 import start
 
 from fastapi import APIRouter
-from starlette.responses import FileResponse
+from starlette.responses import FileResponse, StreamingResponse
 
 shows_router = APIRouter()
 
@@ -23,10 +23,12 @@ shows_router = APIRouter()
 SECTION = 'dirlist'
 PATH = start.CONFIG[SECTION]["path"]
 
-logger = getLogger("shows")
+start.logger = getLogger("shows")
+start.logger.setLevel("DEBUG")
+
 
 @shows_router.get("/folders")
-async def get_folders(path=""):
+async def get_folders(ui_path=""):
     '''
     Pass path as an array to function.
     Returns folders and files.
@@ -34,64 +36,73 @@ async def get_folders(path=""):
 
     results = {}
 
-    logger.info("Loc: %s", path)
+    start.logger.debug("Loc: %s", ui_path)
 
-    if path:
-        entry = PATH + "/" + path
-        # logger.info(entry)
-    else:
-        entry = PATH
+    entry = pathlib.Path(PATH) / ui_path
+    start.logger.debug("Path: %s", entry)
 
     if os.path.isdir(entry):
+        start.logger.debug("Path is dir.")
         results["valid"] = True
     else:
-        logger.error("Invalid path: %s", entry)
+        start.logger.error("Invalid path: %s", entry)
         results["valid"] = False
         return results
 
-    # logger.info("Path: %s", entry)
-
     if os.path.isfile(entry):
-        # logger.info("is file")
+        start.logger.debug("is file")
         return download(entry)
 
     dirs = os.listdir(entry)
+    # start.logger.debug(dirs)
 
-    results["folders"] = [val for val in dirs if os.path.isdir(entry + "/" + val)]
-    results["files"] = [val for val in dirs if os.path.isfile(entry + "/" + val)]
+    results["files"] = [{"name": val} for val in dirs if os.path.isfile(
+        entry / val)]
+    results["folders"] = [{"name": val}
+                          for val in dirs if os.path.isdir(entry / val)]
 
-    results["path_vars"] = path.split("/")
-    results["path"] = path
+    # start.logger.debug(results["folders"])
+
+    if ui_path:
+        ui_path = str(pathlib.Path(ui_path))
+
+    results["path_vars"] = ui_path.split("/")
+    results["path"] = ui_path
 
     if "" in results["path_vars"]:
         results["path_vars"].remove("")
+    start.logger.debug(results["path_vars"])
     return results
+
 
 def download(file_path):
     '''
     Download file for given path.
     '''
     if os.path.isfile(file_path):
-        return FileResponse(path=file_path)
+        file_like = open(file_path, mode="rb")
+        return StreamingResponse(file_like)
+        # return FileResponse(path=file_path)
     return None
 
+
 @shows_router.get("/file")
-async def get_file(path):
+async def get_file(ui_path):
     '''
     Pass path to function.
     Returns folders and files.
     '''
 
-    entry = PATH + "/" + path
-    logger.debug("Folder: %s", entry)
-    logger.debug("Filename: %s", entry.split('/')[-1])
+    entry = pathlib.Path(PATH) / ui_path
+    start.logger.debug("Folder: %s", entry)
+    start.logger.debug("Filename: %s", entry.name)
 
     try:
         if os.path.isfile(entry):
-            # logger.info("Path valid")
+            start.logger.debug("Path valid")
             return download(file_path=entry)
-        logger.error("Not a file.")
+        start.logger.error("Not a file.")
         return "Not a file."
     except Exception as exp:
-        logger.exception(exp)
+        start.logger.exception(exp)
         return "Exception has occured"
