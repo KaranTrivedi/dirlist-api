@@ -8,20 +8,20 @@ Api for getting files and folders
 import configparser
 # Added
 import os
+import logging
 from logging import getLogger
 import pathlib
+
+import start
 
 from fastapi import APIRouter
 from starlette.responses import FileResponse
 
 shows_router = APIRouter()
 
-# Define config and logger.
-CONFIG = configparser.ConfigParser()
-CONFIG.read('/home/karan/projects/dirlist-api/conf/config.ini')
+# Load config from start file.
 SECTION = 'dirlist'
-PATH = CONFIG[SECTION]["path"]
-# PATH = app.CONFIG[SECTION]["path"]
+PATH = start.CONFIG[SECTION]["path"]
 
 logger = getLogger("shows")
 
