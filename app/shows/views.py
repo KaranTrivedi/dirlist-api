@@ -15,8 +15,6 @@ import pathlib
 
 from typing import List
 from fastapi import APIRouter, Query, Header, HTTPException
-# from fastapi.logger import logger as fastapi_logger
-# from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
 shows_router = APIRouter()
@@ -28,9 +26,7 @@ SECTION = 'dirlist'
 PATH = CONFIG[SECTION]["path"]
 # PATH = app.CONFIG[SECTION]["path"]
 
-logger = getLogger("dirlist")
-
-# app.mount("/files", StaticFiles(directory="/shows"), name="shows")
+logger = getLogger("shows")
 
 @shows_router.get("/folders")
 async def get_folders(path=""):
@@ -45,20 +41,27 @@ async def get_folders(path=""):
 
     if path:
         entry = PATH + "/" + path
-        logger.info(entry)
+        # logger.info(entry)
     else:
         entry = PATH
     
-    logger.info("Path: %s", entry)
+    if os.path.isdir(entry):
+        results["valid"] = True
+    else:
+        logger.error("Invalid path: %s", entry)
+        results["valid"] = False
+        return results
+
+    # logger.info("Path: %s", entry)
 
     if os.path.isfile(entry):
         filename = path.split('/')[-1]
-        logger.info("is file")
+        # logger.info("is file")
         return download(entry, filename)
 
     dirs = os.listdir(entry)
-    results["folders"] = [
-        val for val in dirs if os.path.isdir(entry + "/" + val)]
+
+    results["folders"] = [val for val in dirs if os.path.isdir(entry + "/" + val)]
     results["files"] = [val for val in dirs if os.path.isfile(entry + "/" + val)]
     
     results["path_vars"] = path.split("/")
@@ -70,7 +73,7 @@ async def get_folders(path=""):
 
 def download(path, filename):
     if os.path.isfile(path):
-        return FileResponse(path=path, media_type="application/octet-stream",filename=filename)
+        return FileResponse(path=path, filename=filename)
 
 @shows_router.get("/file")
 async def get_file(path):
@@ -79,14 +82,16 @@ async def get_file(path):
     Returns folders and files.
     '''
 
-    entry = PATH + path
-    logger.info("Folder: %s", entry)
-    logger.info("Filename: %s", entry.split('/')[-1])
+    entry = PATH + "/" + path
+    logger.debug("Folder: %s", entry)
+    logger.debug("Filename: %s", entry.split('/')[-1])
+
     try:
         if os.path.isfile(entry):
-            logger.info("Path valid")
-            return FileResponse(path=entry, filename=path.split('/')[-1], media_type='application/octet-stream')
+            # logger.info("Path valid")
+            return download(path=entry, filename=path.split('/')[-1])
         else:
+            logger.error("Not a file.")
             return "Not a file."
     except Exception as exp:
         logger.exception(exp)
