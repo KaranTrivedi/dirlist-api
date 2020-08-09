@@ -5,17 +5,16 @@ Api for getting files and folders
 '''
 
 # DEFAULTS
-import configparser
+import datetime
 # Added
 import os
-import logging
-from logging import getLogger
 import pathlib
-
-import start
+from logging import getLogger
 
 from fastapi import APIRouter
-from starlette.responses import FileResponse, StreamingResponse
+from starlette.responses import StreamingResponse
+
+import start
 
 shows_router = APIRouter()
 
@@ -27,8 +26,19 @@ start.logger = getLogger("shows")
 start.logger.setLevel("DEBUG")
 
 
+def human_size(num, suffix='B'):
+    '''
+    Convert bytes to human readable format
+    '''
+    for unit in ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
+
+
 @shows_router.get("/folders")
-async def get_folders(ui_path=""):
+async def get_folders(ui_path="", sort="asc", column="name"):
     '''
     Pass path as an array to function.
     Returns folders and files.
@@ -56,12 +66,46 @@ async def get_folders(ui_path=""):
     dirs = os.listdir(entry)
     # start.logger.debug(dirs)
 
-    results["files"] = [{"name": val} for val in dirs if os.path.isfile(
-        entry / val)]
-    results["folders"] = [{"name": val}
+    results["files"] = [{"name": val,
+                         "c_time": os.stat(entry / val).st_ctime,
+                         "c_time_h": datetime.datetime.fromtimestamp(int(os.stat(entry / val).st_ctime)).strftime('%Y-%m-%d %H:%M:%S'),
+                         "size": os.stat(entry / val).st_size,
+                         "size_h": human_size(os.stat(entry / val).st_size)
+                         }
+                        for val in dirs if os.path.isfile(entry / val)]
+    # start.logger.debug(results["files"])
+    results["folders"] = [{"name": val,
+                           "c_time": os.stat(entry / val).st_ctime,
+                           "c_time_h": datetime.datetime.fromtimestamp(int(os.stat(entry / val).st_ctime)).strftime('%Y-%m-%d %H:%M:%S')
+                           }
                           for val in dirs if os.path.isdir(entry / val)]
 
     # start.logger.debug(results["folders"])
+
+    if column == "name":
+        if sort == "asc":
+            results["files"] = sorted(results["files"], key=lambda k: k['name'])
+            results["folders"] = sorted(results["folders"], key=lambda k: k['name'])
+        else:
+            results["files"] = sorted(results["files"], key=lambda k: k['name'], reverse=True)
+            results["folders"] = sorted(results["folders"], key=lambda k: k['name'], reverse=True)
+
+    elif column == "creation":
+        if sort == "asc":
+            results["files"] = sorted(results["files"], key=lambda k: k['c_time'])
+            results["folders"] = sorted(results["folders"], key=lambda k: k['c_time'])
+        else:
+            results["files"] = sorted(results["files"], key=lambda k: k['c_time'], reverse=True)
+            results["folders"] = sorted(results["folders"], key=lambda k: k['c_time'], reverse=True)
+
+    elif column == "size":
+        # Sort folder by name, files by size.
+        if sort == "asc":
+            results["files"] = sorted(results["files"], key=lambda k: k['size'])
+            results["folders"] = sorted(results["folders"], key=lambda k: k['name'])
+        else:
+            results["files"] = sorted(results["files"], key=lambda k: k['size'], reverse=True)
+            results["folders"] = sorted(results["folders"], key=lambda k: k['name'], reverse=True)
 
     if ui_path:
         ui_path = str(pathlib.Path(ui_path))
@@ -71,6 +115,7 @@ async def get_folders(ui_path=""):
 
     if "" in results["path_vars"]:
         results["path_vars"].remove("")
+
     start.logger.debug(results["path_vars"])
     return results
 
