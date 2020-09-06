@@ -1,27 +1,31 @@
 import configparser
-import logging
 import os
 from fastapi import FastAPI
 
-import start
+import elastic_calls
+
 from app.root.views import root_router
 
 from app.shows.views import shows_router
 from starlette.middleware.cors import CORSMiddleware
+
+import logging.config
+
+logging.config.fileConfig('conf/logging.ini')
+# log_listener = logging.config.listen(9030)
+# log_listener.start()
+
+logger = logging.getLogger()
+logger.info("test")
 
 origins = [
     "http://localhost:4200",
     "http://192.168.0.16:4200",
 ]
 
-logger = logging.getLogger("main")
-
-
 def add_routes(app: FastAPI):
-    logger.info("Mounting routes")
     app.include_router(root_router)
     app.include_router(shows_router, prefix="/shows")
-
 
 def create_root_app() -> FastAPI:
     app = FastAPI(

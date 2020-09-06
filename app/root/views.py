@@ -5,7 +5,7 @@ import subprocess
 
 root_router = APIRouter()
 
-logger = getLogger("root")
+# logger = getLogger("views")
 
 @root_router.get("/health")
 def health():
