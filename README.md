@@ -2,6 +2,6 @@ Simple api to fetch lit of files and dirs, with basic information for a dirlist 
 
 quick start:
 
-nohup uvicorn app.main:app --reload --host=0.0.0.0 --log-config conf/logging.ini >> logs/dirlist.log &
+python3 start.py
 
 Runs on port 8000, url:8000/docs for documentation page.
