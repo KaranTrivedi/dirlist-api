@@ -1,11 +1,12 @@
 from fastapi import APIRouter
 from urllib.parse import unquote
-from logging import getLogger
 import subprocess
+import logging
 
 root_router = APIRouter()
 
 # logger = getLogger("views")
+logger = logging.getLogger(__name__)
 
 @root_router.get("/health")
 def health():
@@ -15,10 +16,3 @@ def health():
 def take_path(path: str):
     # logger.info( f"Path: {path}")
     return path
-
-@root_router.get("/search")
-def get_search(find):
-    search = subprocess.Popen(["find", "/mnt", "-name", find], stderr=subprocess.PIPE)
-    output = search.stderr.read()
-
-    return output

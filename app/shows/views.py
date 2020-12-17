@@ -16,7 +16,6 @@ from fastapi import APIRouter
 from starlette.responses import StreamingResponse
 
 import app
-
 import start
 
 shows_router = APIRouter()
@@ -25,7 +24,9 @@ shows_router = APIRouter()
 SECTION = "dirlist"
 PATH = start.CONFIG[SECTION]["path"]
 
-logger = logging.getLogger("views")
+# logger = app.root.views.startup_event()
+
+logger = logging.getLogger(__name__)
 
 elastic = app.elastic_calls.elastic_connection(logger=logger)
 
@@ -160,11 +161,16 @@ async def get_folders(ui_path="", sort="asc", column="name"):
 def download(file_path):
     """
     Download file for given path.
+
+    Args:
+        file_path ([type]): [description]
+
+    Returns:
+        [type]: [description]
     """
     if os.path.isfile(file_path):
         file_like = open(file_path, mode="rb")
-        return StreamingResponse(file_like)
-        # return FileResponse(path=file_path)
+        return StreamingResponse(file_like, media_type="video/mp4")
     return None
 
 
@@ -200,25 +206,23 @@ async def get_search(search="*", column="name", sort="asc", size=10, from_doc=0)
     if column == "name":
         column = "name.keyword"
 
-    query = '''
-    {
-        "from" : ''' + str(from_doc) + ''',
-        "size" : ''' + str(size) + ''',
-        "sort" : 
+    query = {
+        "from" : str(from_doc),
+        "size" : str(size),
+        "sort":
         [
-        {
-            "''' + column + '''" : {"order" : "''' + sort + '''"}
-        }
+            {
+                column: {"order": sort}
+            }
         ],
         "query":
         {
             "query_string":
             {
-                "query": "''' + search + '''"
+                "query": search
             }
         }
     }
-    '''
 
     files = {}
 
@@ -231,3 +235,17 @@ async def get_search(search="*", column="name", sort="asc", size=10, from_doc=0)
         files["exception"] = str(exp)
 
     return files
+
+@shows_router.post("/failed_shows")
+async def failed_shows(show):
+    """
+    Catch list of shows
+    Args:
+        ui_path (str, optional): [description]. Defaults to "".
+        sort (str, optional): [description]. Defaults to "asc".
+        column (str, optional): [description]. Defaults to "name".
+    """
+
+    logger.info(show)
+
+    return show

@@ -1,79 +1,98 @@
-#!/venv/bin/python
+#!./venv/bin/python
 """
 Read dirs and folders into elasticsearch.
 """
 
 # DEFAULTS
 import configparser
-import logging
-
-import elastic_calls
-
+import datetime
 import json
-from os.path import isfile, join
-from os import walk
+import logging
 import os
 import pathlib
 import re
-import datetime
+from os import walk
+from os.path import isfile, join
+
+os.chdir("/home/karan/projects/dirlist-api/")
+import elastic_calls
 
 # Define config and logger.
 CONFIG = configparser.ConfigParser()
-CONFIG.read('conf/config.ini')
-SECTION = 'dir_loader'
+CONFIG.read("conf/config.ini")
+SECTION = "dir_loader"
+logger = logging.getLogger(SECTION)
+
 
 def human_size(num, suffix="B"):
     """
     Convert bytes to human readable format
+
+    Args:
+        num (str/float): Send size as string or float.
+        suffix (str, optional): Give wanted suffix. Defaults to "B".
+
+    Returns:
+        (str): Gives data size in given suffix.
     """
+
+    num = float(num)
     for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
         if abs(num) < 1024.0:
             return "%3.1f%s%s" % (num, unit, suffix)
         num /= 1024.0
     return "%.1f%s%s" % (num, "Yi", suffix)
 
-def show_sections(logger):
-    '''
-    Output all options for given section
-    '''
-
-    conf_str = "\n\n"
-    for sect in CONFIG.sections():
-        conf_str += "[" + sect + "]\n"
-        for var in list(CONFIG[sect]):
-            conf_str += var + "\t\t=\t" + CONFIG[sect][var] + "\n"
-    logger.info(conf_str)
-
 
 def main():
-    '''
+    """
     Main function.
-    '''
+    """
 
-    # http://www.costafarms.com/get-growing/news/perennial-flowers-bloom-guide
+    logging.basicConfig(
+        filename=CONFIG[SECTION]["log"],
+        level=CONFIG[SECTION]["level"],
+        format="%(asctime)s::%(levelname)s::%(name)s::%(funcName)s::%(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+    )
 
-    logging.basicConfig(filename=CONFIG[SECTION]['log'],
-                        level=CONFIG[SECTION]['level'],
-                        format='%(asctime)s::%(name)s::%(funcName)s::%(levelname)s::%(message)s',
-                        datefmt='%Y-%m-%d %H:%M:%S')
-
-    logger = logging.getLogger(SECTION)
     logger.info("####################STARTING####################")
-
-    if CONFIG[SECTION]['level'] == "DEBUG":
-        show_sections(logger=logger)
 
     internal = "G:\\4. Videos"
     data_dir = "data"
     files = []
-    ignored_extensions = ["txt", "sfv", "py", "jpg", "png", "srt", "nfo", "tbn", "ico",
-                          "ssa", "website", "old", "bat", "iso", "torrent", "db", "rar",
-                          "cue", "idk", "log", "zip", "docx"]
+    ignored_extensions = [
+        "txt",
+        "sfv",
+        "py",
+        "jpg",
+        "png",
+        "srt",
+        "nfo",
+        "tbn",
+        "ico",
+        "ssa",
+        "website",
+        "old",
+        "bat",
+        "iso",
+        "torrent",
+        "db",
+        "rar",
+        "cue",
+        "idk",
+        "log",
+        "zip",
+        "docx",
+    ]
     for (dirpath, _, filenames) in walk(data_dir, followlinks=True):
         for filename in filenames:
             # val = os.path.join(dirpath, filename)
             path = pathlib.Path(dirpath) / filename
-            if path.suffix[1:].lower() not in ignored_extensions and re.match("r[0-9]{1,3}", path.suffix[1:]) is None:
+            if (
+                path.suffix[1:].lower() not in ignored_extensions
+                and re.match(r"[0-9]{1,3}", path.suffix[1:]) is None
+            ):
                 file_dict = {}
                 file_dict["index"] = "files"
                 file_dict["name"] = filename
@@ -93,7 +112,7 @@ def main():
         # break
 
     elastic = elastic_calls.elastic_connection(logger=logger)
-    elastic.indices.delete(index='files')
+    elastic.indices.delete(index="files")
 
     elastic_calls.elastic_ingest(elastic=elastic, logger=logger, docs=files)
 

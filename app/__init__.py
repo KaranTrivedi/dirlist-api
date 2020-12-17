@@ -9,14 +9,13 @@ from app.root.views import root_router
 from app.shows.views import shows_router
 from starlette.middleware.cors import CORSMiddleware
 
-import logging.config
+import logging
 
-logging.config.fileConfig('conf/logging.ini')
+# logging.config.fileConfig('conf/logging.ini')
 # log_listener = logging.config.listen(9030)
 # log_listener.start()
 
-logger = logging.getLogger()
-logger.info("test")
+logger = logging.getLogger(__name__)
 
 origins = [
     "http://localhost:4200",
