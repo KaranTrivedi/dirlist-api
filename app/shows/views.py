@@ -1,7 +1,7 @@
-#!/projects/dirlist/venv/bin/python
+#!./venv/bin/python
 
 """
-Api for getting files and folders
+Api for getting files and folders in downloads and archives.
 """
 
 # DEFAULTS
@@ -15,20 +15,16 @@ import logging
 from fastapi import APIRouter
 from starlette.responses import StreamingResponse
 
-import elastic_calls
-import local_calls
+import libs.elastic_calls as elastic_calls
+import libs.local_calls as local_calls
 
 import start
 
-shows_router = APIRouter()
-
-# Load config from start file.
-SECTION = "dirlist"
-PATH = start.CONFIG[SECTION]["path"]
-
+DATA_PATH = start.CONFIG["global"]["data_path"]
 logger = logging.getLogger(__name__)
+elastic = elastic_calls.elastic_connection()
 
-elastic = elastic_calls.elastic_connection(logger=logger)
+shows_router = APIRouter()
 
 @shows_router.get("/folders")
 async def get_folders(ui_path="", sort="asc", column="name"):
@@ -42,7 +38,7 @@ async def get_folders(ui_path="", sort="asc", column="name"):
     logger.debug("Loc: %s", ui_path)
 
     try:
-        entry = pathlib.Path(PATH) / ui_path
+        entry = pathlib.Path(DATA_PATH) / ui_path
     except Exception as exp:
         logger.exception(exp)
 
@@ -169,7 +165,7 @@ async def get_file(ui_path):
     Returns folders and files.
     """
 
-    entry = pathlib.Path(PATH) / ui_path
+    entry = pathlib.Path(DATA_PATH) / ui_path
     logger.debug("Folder: %s", entry)
     logger.debug("Filename: %s", entry.name)
 

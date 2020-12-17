@@ -17,17 +17,9 @@ from elasticsearch import Elasticsearch, helpers, client
 CONFIG = configparser.ConfigParser()
 CONFIG.read('conf/config.ini')
 SECTION = 'elastic_calls'
+logger = logging.getLogger(SECTION)
 
-def show_sections(logger, config=CONFIG, section=SECTION):
-    '''
-    Output all options for given section
-    '''
-
-    logger.debug("[%s]", config)
-    for sect in list(config[section]):
-        logger.debug("\t%s:\t%s", section, config[section][sect])
-
-def elastic_connection(logger,\
+def elastic_connection(
                     host=CONFIG[SECTION]['host'],\
                     port=CONFIG[SECTION]['port'],\
                     user=CONFIG[SECTION]['user'],\
@@ -48,7 +40,7 @@ def elastic_connection(logger,\
     #Create and return elastic object.
     return Elasticsearch([host], http_auth=(user, passw))
 
-def cluster_health(logger, elastic):
+def cluster_health(elastic):
 
     '''
     Check health of cluster.
@@ -240,11 +232,6 @@ def main():
                         level=CONFIG[SECTION]['level'],\
                         format='%(asctime)s::%(name)s::%(funcName)s::%(levelname)s::%(message)s',\
                         datefmt='%Y-%m-%d %H:%M:%S')
-
-    logger = logging.getLogger(SECTION)
-
-    if CONFIG[SECTION]['level'] == "DEBUG":
-        show_sections(logger=logger, config=CONFIG, section=SECTION)
 
     ###########Create connection##################################################
     elastic = elastic_connection(logger=logger)
