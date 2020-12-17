@@ -1,8 +1,8 @@
-#!/home/karan/projects/dedup/venv/bin/python
+#!./venv/bin/python
 
-'''
+"""
 Elasticsearch calls
-'''
+"""
 
 import base64
 import configparser

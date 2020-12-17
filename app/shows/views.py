@@ -15,7 +15,9 @@ import logging
 from fastapi import APIRouter
 from starlette.responses import StreamingResponse
 
-import app
+import elastic_calls
+import local_calls
+
 import start
 
 shows_router = APIRouter()
@@ -24,21 +26,9 @@ shows_router = APIRouter()
 SECTION = "dirlist"
 PATH = start.CONFIG[SECTION]["path"]
 
-# logger = app.root.views.startup_event()
-
 logger = logging.getLogger(__name__)
 
-elastic = app.elastic_calls.elastic_connection(logger=logger)
-
-def human_size(num, suffix="B"):
-    """
-    Convert bytes to human readable format
-    """
-    for unit in ["", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi"]:
-        if abs(num) < 1024.0:
-            return "%3.1f%s%s" % (num, unit, suffix)
-        num /= 1024.0
-    return "%.1f%s%s" % (num, "Yi", suffix)
+elastic = elastic_calls.elastic_connection(logger=logger)
 
 @shows_router.get("/folders")
 async def get_folders(ui_path="", sort="asc", column="name"):
@@ -64,12 +54,11 @@ async def get_folders(ui_path="", sort="asc", column="name"):
     else:
         logger.error("Invalid path: %s", entry)
         results["valid"] = False
-        results["valid"] = False
         return results
 
     if os.path.isfile(entry):
-        logger.debug("is file")
-        return download(entry)
+        results["valid"] = False
+        return results
 
     dirs = os.listdir(entry)
     # logger.debug(dirs)
@@ -82,7 +71,7 @@ async def get_folders(ui_path="", sort="asc", column="name"):
                 int(os.stat(entry / val).st_ctime)
             ).strftime("%Y-%m-%d %H:%M:%S"),
             "size": os.stat(entry / val).st_size,
-            "size_h": human_size(os.stat(entry / val).st_size),
+            "size_h": local_calls.human_size(os.stat(entry / val).st_size),
         }
         for val in dirs
         if os.path.isfile(entry / val)
@@ -157,7 +146,6 @@ async def get_folders(ui_path="", sort="asc", column="name"):
     logger.debug(results["path_vars"])
     return results
 
-
 def download(file_path):
     """
     Download file for given path.
@@ -194,47 +182,6 @@ async def get_file(ui_path):
     except Exception as exp:
         logger.exception(exp)
         return "Exception has occured"
-
-@shows_router.get("/search")
-async def get_search(search="*", column="name", sort="asc", size=10, from_doc=0):
-    """
-    Pass search string to get a list of shows.
-    """
-
-    logger.debug(search)
-
-    if column == "name":
-        column = "name.keyword"
-
-    query = {
-        "from" : str(from_doc),
-        "size" : str(size),
-        "sort":
-        [
-            {
-                column: {"order": sort}
-            }
-        ],
-        "query":
-        {
-            "query_string":
-            {
-                "query": search
-            }
-        }
-    }
-
-    files = {}
-
-    try:
-        srch = elastic.search(index="files", body=query)
-        files["data"] = [body["_source"] for body in srch["hits"]["hits"]]
-        files["length"] = srch["hits"]["total"]["value"]
-    except Exception as exp:
-        logger.exception(exp)
-        files["exception"] = str(exp)
-
-    return files
 
 @shows_router.post("/failed_shows")
 async def failed_shows(show):

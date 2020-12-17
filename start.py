@@ -24,21 +24,31 @@ log_config = {
             "fmt": '%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
         },
     },
-    "handlers": {
-        "default": {
+    "handlers":
+    {
+        "default":
+        {
             "formatter": "default",
             "class": 'logging.FileHandler',
             "filename": "logs/default.log"
         },
-        "access": {
+        "error":
+        {
+            "formatter": "default",
+            "class": 'logging.FileHandler',
+            "filename": "logs/error.log"
+        },
+        "access":
+        {
             "formatter": "access",
             "class": 'logging.FileHandler',
             "filename": "logs/access.log"
         },
     },
-    "loggers": {
+    "loggers":
+    {
         "uvicorn": {"handlers": ["default"], "level": "INFO"},
-        "uvicorn.error": {"level": "INFO"},
+        "uvicorn.error": {"handlers": ["error"], "level": "INFO"},
         "uvicorn.access": {"handlers": ["access"], "level": "INFO", "propagate": False},
     },
 }
