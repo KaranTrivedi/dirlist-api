@@ -35,7 +35,7 @@ async def get_folders(ui_path="", sort="asc", column="name"):
 
     results = {}
     ui_path = ui_path.strip("/")
-    logger.debug("Loc: %s", ui_path)
+    logger.info(f"Loc: {ui_path}")
 
     try:
         entry = pathlib.Path(DATA_PATH) / ui_path

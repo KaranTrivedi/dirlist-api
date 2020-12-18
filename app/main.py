@@ -13,25 +13,18 @@ from starlette.middleware.cors import CORSMiddleware
 
 import logging
 
-SECTION = "app"
-
-logger = logging.getLogger(__name__)
-
-logging.config.fileConfig('conf/logging.conf', disable_existing_loggers=False)
-
-# logging.config.fileConfig('conf/logging.ini')
-# # log_listener = logging.config.listen(9030)
-# # log_listener.start()
-
-# logger = logging.getLogger("root")
-# logger.info("test")
+# SECTION = "main"
 
 # CONFIG = configparser.ConfigParser()
 # CONFIG.read("conf/config.ini")
 
-# logging.config.fileConfig('conf/logging.ini')
+# logging.config.fileConfig('conf/logging.conf', disable_existing_loggers=False)
+
 # log_listener = logging.config.listen(9030)
 # log_listener.start()
+
+# logger = logging.getLogger(__name__)
+
 
 origins = [
     "http://localhost:4200",
@@ -63,3 +56,7 @@ def create_root_app() -> FastAPI:
     return app
 
 app = create_root_app()
+
+# @app.on_event("startup")
+# async def startup_event():
+#     logging.config.fileConfig('conf/logging.conf', disable_existing_loggers=True)

@@ -10,7 +10,12 @@ CONFIG = configparser.ConfigParser()
 CONFIG.read('conf/config.ini')
 SECTION = "start"
 
-logger = logging.getLogger(__name__)
+logging.basicConfig(
+    filename=CONFIG[SECTION]["default"],
+    level=CONFIG[SECTION]["level"],
+    format="%(asctime)s::%(levelname)s::%(name)s::%(funcName)s::%(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 # ./venv/lib/python3.8/site-packages/uvicorn/config.py
 log_config = {
@@ -24,7 +29,7 @@ log_config = {
         },
         "access": {
             "()": "uvicorn.logging.AccessFormatter",
-            "fmt": '%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
+            "fmt": '%(asctime)s::%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
         },
     },
     "handlers":
@@ -53,30 +58,21 @@ log_config = {
     },
     "loggers":
     {
-        "uvicorn": {"handlers": ["default"], "level": "INFO"},
-        "uvicorn.error": {"level": "ERROR"},
+        "uvicorn": {"handlers": ["default"], "level": "INFO", "propagate": False},
+        "uvicorn.error": {"handlers": ["error"], "level": "ERROR", "propagate": False},
         "uvicorn.access": {"handlers": ["access"], "level": "INFO", "propagate": False},
     }
 }
 
-# log_config = {}
 
 if __name__ == "__main__":
-
-    # logging.basicConfig(
-    #     filename=CONFIG[SECTION]["log"],
-    #     level=CONFIG[SECTION]["level"],
-    #     format="%(asctime)s::%(levelname)s::%(name)s::%(funcName)s::%(message)s",
-    #     datefmt="%Y-%m-%d %H:%M:%S",
-    # )
-
-    # logging.config.fileConfig('conf/logging.conf', disable_existing_loggers=False)
 
     uvicorn.run(
         app="app.main:app",
         host="0.0.0.0",
         port=8000,
         reload=True,
+        # log_config=None,
         log_config=log_config,
         log_level="info"
     )

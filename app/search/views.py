@@ -54,13 +54,13 @@ async def get_search(query="*", column="name", sort="asc", size=10, from_doc=0):
             "query_string":
             {
                 "query": str(query)
-
             }
         }
     }
 
     logger.info(_query)
-    logger.info("Test")
+    logger.debug(_query)
+
     files = {}
 
     try:

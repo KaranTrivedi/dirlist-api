@@ -14,8 +14,10 @@ import re
 from os import walk
 from os.path import isfile, join
 
-os.chdir("/home/karan/projects/dirlist-api/")
-import elastic_calls
+os.chdir("/home/karan/projects/dirlist-api")
+
+import libs.elastic_calls as elastic_calls
+# from .. libs import elastic_calls
 
 # Define config and logger.
 CONFIG = configparser.ConfigParser()
@@ -111,10 +113,10 @@ def main():
                 files.append(file_dict)
         # break
 
-    elastic = elastic_calls.elastic_connection(logger=logger)
+    elastic = elastic_calls.elastic_connection()
     elastic.indices.delete(index="files")
 
-    elastic_calls.elastic_ingest(elastic=elastic, logger=logger, docs=files)
+    elastic_calls.elastic_ingest(elastic=elastic, docs=files)
 
 
 if __name__ == "__main__":
