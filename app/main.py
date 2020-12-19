@@ -48,12 +48,13 @@ app.add_middleware(
 )
 
 if __name__ != '__main__':
-    uvicorn_logger = logging.getLogger('uvicorn')
-    print(logging.getLogger('uvicorn').handlers)
-    print(logging.getLogger('uvicorn.error').handlers)
-    print(logging.getLogger('uvicorn.access').handlers)
-    print(logger.handlers)
-    print(logger.name)
+    pass
+    # uvicorn_logger = logging.getLogger('uvicorn')
+    # print(logging.getLogger('uvicorn').handlers)
+    # print(logging.getLogger('uvicorn.error').handlers)
+    # print(logging.getLogger('uvicorn.access').handlers)
+    # print(logger.handlers)
+    # print(logger.name)
 
     # logger.handlers = uvicorn_logger.handlers
     # logger.setLevel(uvicorn_logger.level)

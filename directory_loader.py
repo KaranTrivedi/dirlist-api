@@ -86,6 +86,14 @@ def main():
         "log",
         "zip",
         "docx",
+        "js",
+        "rb",
+        "md",
+        "json",
+        "uc",
+        "html",
+        "xnb",
+        "",
     ]
     for (dirpath, _, filenames) in walk(data_dir, followlinks=True):
         for filename in filenames:
@@ -100,6 +108,7 @@ def main():
                 file_dict["name"] = filename
                 file_dict["parent"] = str(path.parent)
                 file_dict["path"] = str(path)
+                file_dict["url"] = "http://192.168.0.16:8000/path/" + str(path)
                 file_dict["internal"] = internal
                 stats = path.stat()
                 file_dict["modify_time"] = stats.st_mtime

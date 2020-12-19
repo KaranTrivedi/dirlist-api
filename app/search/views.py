@@ -58,7 +58,7 @@ async def get_search(query="*", column="name", sort="asc", size=10, from_doc=0):
         }
     }
 
-    logger.info(_query)
+    logger.debug(_query)
 
     files = {}
 

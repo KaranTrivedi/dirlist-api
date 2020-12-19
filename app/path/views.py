@@ -26,10 +26,22 @@ path_router = APIRouter()
 
 @path_router.get("/{ui_path:path}")
 async def get_path(ui_path: str, sort="asc", column="name"):
+    """
+    Pass unix like path to endpoint, get list of folders and files as response.
+
+    Args:
+        ui_path (str): unix like path for folder.
+        sort (str, optional): Sort direction. Defaults to "asc".
+        column (str, optional): [description]. Defaults to "name".
+
+    Returns:
+        (dict): dict containing a list of folders and files with some metadata
+            or file as a response.
+    """
 
     results = {}
     ui_path = ui_path.strip("/")
-    logger.info(f"Loc: {ui_path}")
+    logger.debug(f"Loc: {ui_path}")
 
     try:
         entry = Path(DATA_PATH) / ui_path
@@ -41,13 +53,9 @@ async def get_path(ui_path: str, sort="asc", column="name"):
     if os.path.isdir(entry):
         logger.debug("Path is dir.")
         results["valid"] = True
-    else:
-        logger.error(f"Invalid path: {entry}")
-        results["valid"] = False
+    results["valid"] = False
 
     if os.path.isfile(entry):
-        logger.info(entry)
-        entry = Path(DATA_PATH) / ui_path
         return download(file_path=entry)
 
     dirs = os.listdir(entry)
@@ -148,6 +156,13 @@ def download(file_path):
     Returns:
         (StreamingResponse): chunks of data.
     """
+
+    # headers = {
+    # "Accept-Ranges": "bytes",
+    # "Content-Length": str(sz),
+    # "Content-Range": F"bytes {asked}-{sz-1}/{sz}",
+    # }
+    # response =  StreamingResponse(streaming_file(file_path, CS, asked), headers=headers)
 
     if os.path.isfile(file_path):
         file_like = open(file_path, mode="rb")
