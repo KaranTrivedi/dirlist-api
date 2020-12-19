@@ -42,13 +42,13 @@ async def get_folders(ui_path="", sort="asc", column="name"):
     except Exception as exp:
         logger.exception(exp)
 
-    logger.debug("Path: %s", entry)
+    logger.debug(f"Path: {entry}")
 
     if os.path.isdir(entry):
         logger.debug("Path is dir.")
         results["valid"] = True
     else:
-        logger.error("Invalid path: %s", entry)
+        logger.error(f"Invalid path: {entry}")
         results["valid"] = False
         return results
 
@@ -62,6 +62,7 @@ async def get_folders(ui_path="", sort="asc", column="name"):
     results["files"] = [
         {
             "name": val,
+            "ext": val[-3:],
             "modify_time": os.stat(entry / val).st_ctime,
             "modify_time_h": datetime.datetime.fromtimestamp(
                 int(os.stat(entry / val).st_ctime)
@@ -72,7 +73,7 @@ async def get_folders(ui_path="", sort="asc", column="name"):
         for val in dirs
         if os.path.isfile(entry / val)
     ]
-    # logger.debug(results["files"])
+
     results["folders"] = [
         {
             "name": val,

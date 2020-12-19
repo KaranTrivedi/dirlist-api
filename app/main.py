@@ -25,7 +25,6 @@ import logging
 
 # logger = logging.getLogger(__name__)
 
-
 origins = [
     "http://localhost:4200",
     "http://192.168.0.16:4200"

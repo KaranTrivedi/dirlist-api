@@ -20,7 +20,7 @@ logging.basicConfig(
 # ./venv/lib/python3.8/site-packages/uvicorn/config.py
 log_config = {
     "version": 1,
-    "disable_existing_loggers": True,
+    "disable_existing_loggers": False,
     "formatters": {
         "default": {
             "()": "uvicorn.logging.DefaultFormatter",
@@ -64,7 +64,6 @@ log_config = {
     }
 }
 
-
 if __name__ == "__main__":
 
     uvicorn.run(
@@ -74,5 +73,6 @@ if __name__ == "__main__":
         reload=True,
         # log_config=None,
         log_config=log_config,
+        use_colors=True,
         log_level="info"
     )
