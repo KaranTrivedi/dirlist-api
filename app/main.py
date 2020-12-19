@@ -23,38 +23,49 @@ import logging
 # log_listener = logging.config.listen(9030)
 # log_listener.start()
 
-# logger = logging.getLogger(__name__)
+SECTION = "start"
+
+logging.basicConfig(
+    filename=start.CONFIG[SECTION]["default"],
+    level=start.CONFIG[SECTION]["level"],
+    format="%(asctime)s::%(levelname)s::%(name)s::%(funcName)s::%(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+logger = logging.getLogger(__name__)
 
 origins = [
     "http://localhost:4200",
     "http://192.168.0.16:4200"
 ]
 
-def add_routes(app: FastAPI):
-    app.include_router(root_router)
-    app.include_router(shows_router, prefix="/shows")
-    app.include_router(search_router, prefix="/search")
+app = FastAPI(
+    title="First api",
+    description="API for website",
+    version="0.1"
+)
+app.include_router(root_router)
+app.include_router(shows_router, prefix="/shows")
+app.include_router(search_router, prefix="/search")
 
-def create_root_app() -> FastAPI:
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-    app = FastAPI(
-        title="First api",
-        description="API for website",
-        version="0.1"
-    )
-    add_routes(app)
+if __name__ != '__main__':
+    uvicorn_logger = logging.getLogger('uvicorn')
+    print(logging.getLogger('uvicorn').handlers)
+    print(logging.getLogger('uvicorn.error').handlers)
+    print(logging.getLogger('uvicorn.access').handlers)
+    print(logger.handlers)
+    print(logger.name)
 
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
-
-    return app
-
-app = create_root_app()
+    # logger.handlers = uvicorn_logger.handlers
+    # logger.setLevel(uvicorn_logger.level)
 
 # @app.on_event("startup")
 # async def startup_event():

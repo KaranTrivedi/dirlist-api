@@ -25,6 +25,32 @@ logger = logging.getLogger(__name__)
 elastic = elastic_calls.elastic_connection()
 
 shows_router = APIRouter()
+@shows_router.get("/f/{ui_path:path}")
+async def get_path(ui_path: str, sort="asc", column="name"):
+
+    results = {}
+    ui_path = ui_path.strip("/")
+    logger.info(f"Loc: {ui_path}")
+
+    try:
+        entry = pathlib.Path(DATA_PATH) / ui_path
+    except Exception as exp:
+        logger.exception(exp)
+
+    logger.debug(f"Path: {entry}")
+
+    if os.path.isdir(entry):
+        logger.debug("Path is dir.")
+        results["valid"] = True
+    else:
+        logger.error(f"Invalid path: {entry}")
+        results["valid"] = False
+        return results
+
+    # if os.path.isfile(entry):
+    #     GO TO DOWNLOAD FUNCTION?
+
+    return True
 
 @shows_router.get("/folders")
 async def get_folders(ui_path="", sort="asc", column="name"):
