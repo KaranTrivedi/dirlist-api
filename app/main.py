@@ -6,7 +6,7 @@ from fastapi import FastAPI
 import start
 
 from app.root.views import root_router
-from app.shows.views import shows_router
+from app.path.views import path_router
 from app.search.views import search_router
 
 from starlette.middleware.cors import CORSMiddleware
@@ -23,15 +23,6 @@ import logging
 # log_listener = logging.config.listen(9030)
 # log_listener.start()
 
-SECTION = "start"
-
-logging.basicConfig(
-    filename=start.CONFIG[SECTION]["default"],
-    level=start.CONFIG[SECTION]["level"],
-    format="%(asctime)s::%(levelname)s::%(name)s::%(funcName)s::%(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-
 logger = logging.getLogger(__name__)
 
 origins = [
@@ -45,7 +36,7 @@ app = FastAPI(
     version="0.1"
 )
 app.include_router(root_router)
-app.include_router(shows_router, prefix="/shows")
+app.include_router(path_router, prefix="/path")
 app.include_router(search_router, prefix="/search")
 
 app.add_middleware(
