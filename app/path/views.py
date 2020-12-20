@@ -25,7 +25,7 @@ elastic = elastic_calls.elastic_connection()
 path_router = APIRouter()
 
 @path_router.get("/{ui_path:path}")
-async def get_path(ui_path: str, sort="asc", column="name"):
+async def get_path(ui_path: str, sort="asc", column="name", query=""):
     """
     Pass unix like path to endpoint, get list of folders and files as response.
 
@@ -60,13 +60,12 @@ async def get_path(ui_path: str, sort="asc", column="name"):
         return download(file_path=entry)
 
     dirs = os.listdir(entry)
-    # logger.debug(dirs)
 
     # listcomp
     results["files"] = [
         {
             "name": val,
-            "ext": val[-3:],
+            "ext": val.split(".")[-1],
             "modify_time": os.stat(entry / val).st_ctime,
             "modify_time_h": datetime.datetime.fromtimestamp(
                 int(os.stat(entry / val).st_ctime)
@@ -75,7 +74,8 @@ async def get_path(ui_path: str, sort="asc", column="name"):
             "size_h": local_calls.human_size(os.stat(entry / val).st_size),
         }
         for val in dirs
-        if os.path.isfile(entry / val)
+        # Make sure path is file and name contains query chars
+        if os.path.isfile(entry / val) and query in val.lower()
     ]
 
     # listcomp
@@ -88,7 +88,7 @@ async def get_path(ui_path: str, sort="asc", column="name"):
             ).strftime("%Y-%m-%d %H:%M:%S"),
         }
         for val in dirs
-        if os.path.isdir(entry / val)
+        if os.path.isdir(entry / val) and query in val.lower()
     ]
     if column == "name":
         if sort == "asc":
@@ -119,19 +119,12 @@ async def get_path(ui_path: str, sort="asc", column="name"):
             )
 
     elif column == "size":
-        # Sort folder by name, files by size.
         if sort == "asc":
             results["files"] = sorted(
                 results["files"], key=lambda k: k["size"])
-            results["folders"] = sorted(
-                results["folders"], key=lambda k: k["name"].casefold())
         else:
             results["files"] = sorted(
-                results["files"], key=lambda k: k["size"], reverse=True
-            )
-            results["folders"] = sorted(
-                results["folders"], key=lambda k: k["name"].casefold(), reverse=True
-            )
+                results["files"], key=lambda k: k["size"], reverse=True)
 
     if ui_path:
         ui_path = str(Path(ui_path))
@@ -140,12 +133,11 @@ async def get_path(ui_path: str, sort="asc", column="name"):
     results["path"] = ui_path
 
     if "" in results["path_vars"]:
-        logger.exception(results["path_vars"])
+        logger.debug(results["path_vars"])
         results["path_vars"].remove("")
 
-    logger.debug(results["path_vars"])
-
     return results
+
 
 def download(file_path):
     """

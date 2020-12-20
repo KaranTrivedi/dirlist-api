@@ -1,5 +1,5 @@
 [Unit]
-Description=Service
+Description=Dirist-Api Service
 #After=multi-user.target
 
 [Service]
@@ -10,6 +10,10 @@ ExecReload=/bin/kill -HUP
 User=karan
 Group=karan
 
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=dirlist-api
+
 Restart=always
 TimeoutStartSec=10
 RestartSec=10
@@ -17,7 +21,7 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 
-#sudo mv . /lib/systemd/system/
-#sudo sysmtemctl enable dirlist.py
-#sudo sysmtemctl start dirlist.py
-#sudo sysmtemctl status dirlist.py
+# sudo cp dirlist.service /lib/systemd/system/
+# sudo sysmtemctl enable dirlist.py
+# sudo sysmtemctl start dirlist.py
+# sudo sysmtemctl status dirlist.py

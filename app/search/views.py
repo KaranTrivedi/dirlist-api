@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 elastic = elastic_calls.elastic_connection()
 
 @search_router.get("/")
-async def get_search(query="*", column="name", sort="asc", size=10, from_doc=0):
+async def get_search(query="*", column="name", direction="asc", size=10, from_doc=0):
     """
     Pass search string to get a list of shows.
 
@@ -41,7 +41,7 @@ async def get_search(query="*", column="name", sort="asc", size=10, from_doc=0):
         "sort":
         [
             {
-                column: {"order": sort}
+                column: {"order": direction}
             }
         ],
         "query":

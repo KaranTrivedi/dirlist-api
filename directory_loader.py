@@ -8,6 +8,8 @@ import configparser
 import datetime
 import logging
 import os
+import sys
+import json
 import pathlib
 import re
 from os import walk
@@ -57,8 +59,7 @@ def main():
 
     logger.info("####################STARTING####################")
 
-    internal = "G:\\4. Videos"
-    data_dir = "data"
+    data_dir = "data/"
     files = []
     ignored_extensions = [
         "txt",
@@ -98,15 +99,15 @@ def main():
             # val = os.path.join(dirpath, filename)
             path = pathlib.Path(dirpath) / filename
             if (path.suffix[1:].lower() not in ignored_extensions
-            and re.match(r"[0-9]{1,3}", path.suffix[1:]) is None
+                    and re.match(r"[0-9]{1,3}", path.suffix[1:]) is None
                 ):
                 file_dict = {}
                 file_dict["index"] = "files"
                 file_dict["name"] = filename
-                file_dict["parent"] = str(path.parent)
-                file_dict["path"] = str(path)
-                file_dict["url"] = "http://192.168.0.16:8000/path/" + str(path)
-                file_dict["internal"] = internal
+                file_dict["parent"] = str(path.parent)[len(data_dir):]
+                file_dict["path"] = str(path)[len(data_dir):]
+                file_dict["url"] = "http://192.168.0.16:8000/path/" + \
+                    str(path)[len(data_dir):]
                 stats = path.stat()
                 file_dict["modify_time"] = stats.st_mtime
                 file_dict["modify_time_h"] = datetime.datetime.fromtimestamp(
@@ -117,13 +118,15 @@ def main():
                 file_dict["suffix"] = path.suffix[1:].lower()
 
                 files.append(file_dict)
+                # logger.info(json.dumps(file_dict, indent=2))
+                # sys.exit()
         # break
 
     elastic = elastic_calls.elastic_connection()
     elastic.indices.delete(index="files")
 
     elastic_calls.elastic_ingest(elastic=elastic, docs=files)
-
+    sys.exit()
 
 if __name__ == "__main__":
     main()

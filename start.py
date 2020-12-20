@@ -28,8 +28,8 @@ log_config = {
     "formatters": {
         "default": {
             "()": "uvicorn.logging.DefaultFormatter",
-            "fmt": "%(asctime)s::%(levelname)s::%(name)s::%(filename)s::%(funcName)s - %(message)s",
-            "use_colors": None,
+            "fmt": "%(asctime)s::%(levelname)s::%(name)s::%(filename)s::%(funcName)s::%(lineno)d - %(message)s",
+            "use_colors": True,
         },
         "access": {
             "()": "uvicorn.logging.AccessFormatter",
@@ -63,7 +63,7 @@ log_config = {
     "loggers":
     {
         "uvicorn": {"handlers": ["default"], "level": "INFO", "propagate": False},
-        "uvicorn.error": {"handlers": ["error"], "level": "ERROR", "propagate": False},
+        "uvicorn.error": {"handlers": ["error"], "level": "INFO", "propagate": False},
         "uvicorn.access": {"handlers": ["access"], "level": "INFO", "propagate": False},
     }
 }
