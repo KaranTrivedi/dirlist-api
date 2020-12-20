@@ -1,17 +1,17 @@
 #!./venv/bin/python
 
-import configparser
-import os
-from fastapi import FastAPI
-import start
-
-from app.root.views import root_router
-from app.path.views import path_router
-from app.search.views import search_router
-
-from starlette.middleware.cors import CORSMiddleware
+"""
+File to load dirs and files into elastic for search.
+"""
 
 import logging
+
+from fastapi import FastAPI
+from starlette.middleware.cors import CORSMiddleware
+
+from app.path.views import path_router
+from app.root.views import root_router
+from app.search.views import search_router
 
 # SECTION = "main"
 

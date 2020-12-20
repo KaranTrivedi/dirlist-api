@@ -6,18 +6,15 @@ Read dirs and folders into elasticsearch.
 # DEFAULTS
 import configparser
 import datetime
-import json
 import logging
 import os
 import pathlib
 import re
 from os import walk
-from os.path import isfile, join
-
-os.chdir("/home/karan/projects/dirlist-api")
 
 import libs.elastic_calls as elastic_calls
-# from .. libs import elastic_calls
+
+os.chdir("/home/karan/projects/dirlist-api")
 
 # Define config and logger.
 CONFIG = configparser.ConfigParser()
@@ -93,16 +90,16 @@ def main():
         "uc",
         "html",
         "xnb",
+        "svg",
         "",
     ]
     for (dirpath, _, filenames) in walk(data_dir, followlinks=True):
         for filename in filenames:
             # val = os.path.join(dirpath, filename)
             path = pathlib.Path(dirpath) / filename
-            if (
-                path.suffix[1:].lower() not in ignored_extensions
-                and re.match(r"[0-9]{1,3}", path.suffix[1:]) is None
-            ):
+            if (path.suffix[1:].lower() not in ignored_extensions
+            and re.match(r"[0-9]{1,3}", path.suffix[1:]) is None
+                ):
                 file_dict = {}
                 file_dict["index"] = "files"
                 file_dict["name"] = filename

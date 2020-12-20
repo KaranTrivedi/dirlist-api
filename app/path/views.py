@@ -53,7 +53,8 @@ async def get_path(ui_path: str, sort="asc", column="name"):
     if os.path.isdir(entry):
         logger.debug("Path is dir.")
         results["valid"] = True
-    results["valid"] = False
+    else:
+        results["valid"] = False
 
     if os.path.isfile(entry):
         return download(file_path=entry)

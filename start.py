@@ -1,9 +1,13 @@
 #!./venv/bin/python
 
-import uvicorn
+"""
+Start file for initiating uvicorn.
+"""
+
 import configparser
 import logging
-import json
+
+import uvicorn
 
 # Define config and logger.
 CONFIG = configparser.ConfigParser()

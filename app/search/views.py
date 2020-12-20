@@ -4,16 +4,11 @@
 Api for search page
 """
 
-import os
-import pathlib
 import logging
 
-import libs.elastic_calls as elastic_calls
-
 from fastapi import APIRouter
-from starlette.responses import StreamingResponse
 
-import start
+import libs.elastic_calls as elastic_calls
 
 search_router = APIRouter()
 
