@@ -13,12 +13,14 @@ import uvicorn
 CONFIG = configparser.ConfigParser()
 CONFIG.read('conf/config.ini')
 SECTION = "start"
+IP = "192.168.0.16"
+PORT = 8000
 
 logging.basicConfig(
     filename=CONFIG[SECTION]["default"],
     level=CONFIG[SECTION]["level"],
     format="%(asctime)s::%(levelname)s::%(name)s::%(funcName)s::%(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
+    datefmt="%Y-%m-%dT%H:%M:%S%z",
 )
 
 # ./venv/lib/python3.8/site-packages/uvicorn/config.py
@@ -28,12 +30,15 @@ log_config = {
     "formatters": {
         "default": {
             "()": "uvicorn.logging.DefaultFormatter",
-            "fmt": "%(asctime)s::%(levelname)s::%(name)s::%(filename)s::%(funcName)s::%(lineno)d - %(message)s",
-            "use_colors": True,
+            "fmt": "%(asctime)s::%(levelname)s::%(name)s::%(filename)s::%(funcName)s::%(message)s",
+            "datefmt": "%Y-%m-%dT%H:%M:%S%z",
+            "use_colors": False,
         },
         "access": {
             "()": "uvicorn.logging.AccessFormatter",
-            "fmt": '%(asctime)s::%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
+            "datefmt": "%Y-%m-%dT%H:%M:%S%z",
+            "fmt": '%(asctime)s::%(levelprefix)s %(client_addr)s - "%(request_line)s" %(msecs)d %(status_code)s',
+            "use_colors": False,
         },
     },
     "handlers":
@@ -72,11 +77,9 @@ if __name__ == "__main__":
 
     uvicorn.run(
         app="app.main:app",
-        host="0.0.0.0",
-        port=8000,
+        host=IP,
+        port=PORT,
         reload=True,
-        # log_config=None,
         log_config=log_config,
-        use_colors=True,
         log_level="info"
     )

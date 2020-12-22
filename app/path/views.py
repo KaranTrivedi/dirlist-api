@@ -24,8 +24,8 @@ elastic = elastic_calls.elastic_connection()
 
 path_router = APIRouter()
 
-@path_router.get("/{ui_path:path}")
-async def get_path(ui_path: str, sort="asc", column="name", query=""):
+@path_router.get("/{relative_path:path}")
+async def get_path(relative_path: str, sort="asc", column="name", query=""):
     """
     Pass unix like path to endpoint, get list of folders and files as response.
 
@@ -40,55 +40,64 @@ async def get_path(ui_path: str, sort="asc", column="name", query=""):
     """
 
     results = {}
-    ui_path = ui_path.strip("/")
-    logger.debug(f"Loc: {ui_path}")
+    relative_path = relative_path.strip("/")
+    logger.debug(f"Loc: {relative_path}")
 
     try:
-        entry = Path(DATA_PATH) / ui_path
+        full_path = Path(DATA_PATH) / relative_path
     except Exception as exp:
         logger.exception(exp)
 
-    logger.debug(f"Path: {entry}")
+    logger.debug(f"Path: {full_path}")
 
-    if os.path.isdir(entry):
+    if os.path.isdir(full_path):
         logger.debug("Path is dir.")
         results["valid"] = True
     else:
         results["valid"] = False
 
-    if os.path.isfile(entry):
-        return download(file_path=entry)
+    if os.path.isfile(full_path):
+        logger.info(f"http://{start.IP}:{start.PORT}/path/{relative_path}")
+        return download(file_path=full_path)
 
-    dirs = os.listdir(entry)
+    try:
+        dirs = os.listdir(full_path)
+    except Exception as exp:
+        logger.exception(exp)
+        results["valid"] = False
+        return results
 
     # listcomp
     results["files"] = [
         {
             "name": val,
-            "ext": val.split(".")[-1],
-            "modify_time": os.stat(entry / val).st_ctime,
+            "ext": Path(full_path / val).suffix[1:].lower(),
+            "modify_time": os.stat(full_path / val).st_ctime * 1000,
             "modify_time_h": datetime.datetime.fromtimestamp(
-                int(os.stat(entry / val).st_ctime)
+                int(os.stat(full_path / val).st_ctime)
             ).strftime("%Y-%m-%d %H:%M:%S"),
-            "size": os.stat(entry / val).st_size,
-            "size_h": local_calls.human_size(os.stat(entry / val).st_size),
+            "size": os.stat(full_path / val).st_size,
+            "size_h": local_calls.human_size(os.stat(full_path / val).st_size),
+            "path": Path(relative_path),
         }
         for val in dirs
         # Make sure path is file and name contains query chars
-        if os.path.isfile(entry / val) and query in val.lower()
+        if os.path.isfile(full_path / val) and query in val.lower()
     ]
 
     # listcomp
     results["folders"] = [
         {
             "name": val,
-            "modify_time": os.stat(entry / val).st_ctime,
+            "modify_time": os.stat(full_path / val).st_ctime * 1000,
             "modify_time_h": datetime.datetime.fromtimestamp(
-                int(os.stat(entry / val).st_ctime)
+                int(os.stat(full_path / val).st_ctime)
             ).strftime("%Y-%m-%d %H:%M:%S"),
+            "file_count":  len([name for name in os.listdir(full_path / val) if os.path.isfile(os.path.join(full_path / val, name))]),
+            "folder_count":  len([name for name in os.listdir(full_path / val) if os.path.isdir(os.path.join(full_path / val, name))]),
         }
         for val in dirs
-        if os.path.isdir(entry / val) and query in val.lower()
+        if os.path.isdir(full_path / val) and query in val.lower()
     ]
     if column == "name":
         if sort == "asc":
@@ -126,11 +135,11 @@ async def get_path(ui_path: str, sort="asc", column="name", query=""):
             results["files"] = sorted(
                 results["files"], key=lambda k: k["size"], reverse=True)
 
-    if ui_path:
-        ui_path = str(Path(ui_path))
+    if relative_path:
+        relative_path = str(Path(relative_path))
 
-    results["path_vars"] = ui_path.split("/")
-    results["path"] = ui_path
+    results["path_vars"] = relative_path.split("/")
+    results["path"] = relative_path
 
     if "" in results["path_vars"]:
         logger.debug(results["path_vars"])

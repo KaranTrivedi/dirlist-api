@@ -35,6 +35,7 @@ app = FastAPI(
     description="API for website",
     version="0.1"
 )
+
 app.include_router(root_router)
 app.include_router(path_router, prefix="/path")
 app.include_router(search_router, prefix="/search")
@@ -58,7 +59,3 @@ if __name__ != '__main__':
 
     # logger.handlers = uvicorn_logger.handlers
     # logger.setLevel(uvicorn_logger.level)
-
-# @app.on_event("startup")
-# async def startup_event():
-#     logging.config.fileConfig('conf/logging.conf', disable_existing_loggers=True)

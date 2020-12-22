@@ -62,37 +62,37 @@ def main():
     data_dir = "data/"
     files = []
     ignored_extensions = [
-        "txt",
-        "sfv",
-        "py",
-        "jpg",
-        "png",
-        "srt",
-        "nfo",
-        "tbn",
-        "ico",
-        "ssa",
-        "website",
-        "old",
-        "bat",
-        "iso",
-        "torrent",
-        "db",
-        "rar",
-        "cue",
-        "idk",
-        "log",
-        "zip",
-        "docx",
-        "js",
-        "rb",
-        "md",
-        "json",
-        "uc",
-        "html",
-        "xnb",
-        "svg",
-        "",
+        # "txt",
+        # "sfv",
+        # "py",
+        # "jpg",
+        # "png",
+        # "srt",
+        # "nfo",
+        # "tbn",
+        # "ico",
+        # "ssa",
+        # "website",
+        # "old",
+        # "bat",
+        # "iso",
+        # "torrent",
+        # "db",
+        # "rar",
+        # "cue",
+        # "idk",
+        # "log",
+        # "zip",
+        # "docx",
+        # "js",
+        # "rb",
+        # "md",
+        # "json",
+        # "uc",
+        # "html",
+        # "xnb",
+        # "svg",
+        # "",
     ]
     for (dirpath, _, filenames) in walk(data_dir, followlinks=True):
         for filename in filenames:
@@ -104,21 +104,21 @@ def main():
                 file_dict = {}
                 file_dict["index"] = "files"
                 file_dict["name"] = filename
-                file_dict["parent"] = str(path.parent)[len(data_dir):]
+                file_dict["parent"] = str(path.parent)[len(data_dir):] + "/"
                 file_dict["path"] = str(path)[len(data_dir):]
                 file_dict["url"] = "http://192.168.0.16:8000/path/" + \
                     str(path)[len(data_dir):]
                 stats = path.stat()
-                file_dict["modify_time"] = stats.st_mtime
+                file_dict["modify_time"] = stats.st_mtime*1000
                 file_dict["modify_time_h"] = datetime.datetime.fromtimestamp(
                     int(stats.st_mtime)
                 ).strftime("%Y-%m-%dT%H:%M:%S%z")
                 file_dict["size"] = stats.st_size
                 file_dict["size_h"] = human_size(stats.st_size)
-                file_dict["suffix"] = path.suffix[1:].lower()
+                file_dict["ext"] = path.suffix[1:].lower()
 
                 files.append(file_dict)
-                # logger.info(json.dumps(file_dict, indent=2))
+                logger.debug(json.dumps(file_dict, indent=2))
                 # sys.exit()
         # break
 
