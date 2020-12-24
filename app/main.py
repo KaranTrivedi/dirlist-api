@@ -6,24 +6,22 @@ File to load dirs and files into elastic for search.
 
 import logging
 
+# import start
+
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
-from app.path.views import path_router
+from app.directory.views import directory_router
 from app.root.views import root_router
 from app.search.views import search_router
-
-# SECTION = "main"
-
-# CONFIG = configparser.ConfigParser()
-# CONFIG.read("conf/config.ini")
+from app.metrics.views import metrics_router
 
 # logging.config.fileConfig('conf/logging.conf', disable_existing_loggers=False)
 
 # log_listener = logging.config.listen(9030)
 # log_listener.start()
 
-logger = logging.getLogger(__name__)
+# logging.config.fileConfig('conf/logging.ini', disable_existing_loggers=True)
 
 origins = [
     "http://localhost:4200",
@@ -31,14 +29,15 @@ origins = [
 ]
 
 app = FastAPI(
-    title="First api",
+    title="Dirslist Api",
     description="API for website",
     version="0.1"
 )
 
 app.include_router(root_router)
-app.include_router(path_router, prefix="/path")
+app.include_router(directory_router, prefix="/directory")
 app.include_router(search_router, prefix="/search")
+app.include_router(metrics_router, prefix="/metrics")
 
 app.add_middleware(
     CORSMiddleware,
@@ -48,14 +47,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-if __name__ != '__main__':
-    pass
-    # uvicorn_logger = logging.getLogger('uvicorn')
-    # print(logging.getLogger('uvicorn').handlers)
-    # print(logging.getLogger('uvicorn.error').handlers)
-    # print(logging.getLogger('uvicorn.access').handlers)
-    # print(logger.handlers)
-    # print(logger.name)
+# @app.on_event("startup")
+# async def startup_event():
+#     logging.config.fileConfig('conf/logging.ini', disable_existing_loggers=True)
 
-    # logger.handlers = uvicorn_logger.handlers
-    # logger.setLevel(uvicorn_logger.level)
+    # logging.basicConfig(
+    #     filename=start.CONFIG[start.SECTION]["default"],
+    #     level=start.CONFIG[start.SECTION]["level"],
+    #     format="%(asctime)s::%(levelname)s::%(name)s::%(funcName)s::%(message)s",
+    #     datefmt="%Y-%m-%dT%H:%M:%S%z",
+    # )
+
+# if __name__ != '__main__':
+    # logger = logging.getLogger('uvicorn')
+    # print(logger.name)
+    # print(logger.handlers)

@@ -8,12 +8,12 @@ import base64
 import configparser
 import sys
 import logging
+import json
 from time import sleep
-import random
-import datetime as DT
-# import json
+# import random
+# import datetime as DT
 
-from elasticsearch import Elasticsearch, helpers, client
+from elasticsearch import Elasticsearch, helpers
 
 CONFIG = configparser.ConfigParser()
 CONFIG.read("conf/config.ini")
@@ -84,10 +84,10 @@ def cluster_health(elastic):
             logger.exception(exp)
             return False
         if status in ("yellow", "green"):
-            logger.debug("Response from elastic: %s.", status)
+            logger.debug(f"Response from elastic: {status}")
             return True
 
-        logger.info("Response from elastic: %s. Checking again in 1s.", status)
+        logger.info(f"Response from elastic: {status}. Checking again in 1s.")
         sleep(1)
 
 

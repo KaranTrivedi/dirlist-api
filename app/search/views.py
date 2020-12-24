@@ -1,4 +1,4 @@
-#!/projects/dirlist/venv/bin/python
+#!./venv/bin/python
 
 """
 Api for search page

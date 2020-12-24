@@ -4,6 +4,7 @@ Description=Dirist-Api Service
 
 [Service]
 Type=simple
+Environment=PYTHONUNBUFFERED=1
 WorkingDirectory=/home/karan/projects/dirlist-api
 ExecStart=/home/karan/projects/dirlist-api/venv/bin/python3 /home/karan/projects/dirlist-api/start.py
 ExecReload=/bin/kill -HUP
@@ -21,7 +22,8 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 
-# sudo cp dirlist.service /lib/systemd/system/
+# sudo cp service/dirlist-api.service /lib/systemd/system/
+# sudo systemctl daemon-reload
 # sudo sysmtemctl enable dirlist.py
 # sudo sysmtemctl start dirlist.py
 # sudo sysmtemctl status dirlist.py
