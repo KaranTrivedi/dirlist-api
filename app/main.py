@@ -4,10 +4,6 @@
 File to load dirs and files into elastic for search.
 """
 
-import logging
-
-# import start
-
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
