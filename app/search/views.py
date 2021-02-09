@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 elastic = elastic_calls.elastic_connection()
 DATA_PATH = start.CONFIG["global"]["data_path"]
 
-@search_router.get("/")
+@search_router.get("/", tags=["search"])
 async def get_search(query="*", column="name", sort="asc", size=10, from_doc=0):
     """
     Pass search string to get a list of shows.
@@ -37,7 +37,7 @@ async def get_search(query="*", column="name", sort="asc", size=10, from_doc=0):
         from_doc (int, optional): [description]. Defaults to 0.
 
     Returns:
-        [type]: Files found
+        (list): Files found
     """
 
     if column == "name":
@@ -75,7 +75,7 @@ async def get_search(query="*", column="name", sort="asc", size=10, from_doc=0):
 
     return files
 
-@search_router.get("/refresh")
+@search_router.get("/refresh", tags=["search"])
 def set_search():
     """
     Call to refresh data in elastic.
@@ -87,37 +87,37 @@ def set_search():
     logger.info("Starting reload.")
     files = []
     ignored_extensions = [
-        "txt",
-        "sfv",
-        "py",
-        "jpg",
-        "png",
-        "srt",
-        "nfo",
-        "tbn",
-        "ico",
-        "ssa",
-        "website",
-        "old",
-        "bat",
-        "iso",
-        "torrent",
-        "db",
-        "rar",
-        "cue",
-        "idk",
-        "log",
-        "zip",
-        "docx",
-        "js",
-        "rb",
-        "md",
-        "json",
-        "uc",
-        "html",
-        "xnb",
-        "svg",
-        "",
+        # "txt",
+        # "sfv",
+        # "py",
+        # "jpg",
+        # "png",
+        # "srt",
+        # "nfo",
+        # "tbn",
+        # "ico",
+        # "ssa",
+        # "website",
+        # "old",
+        # "bat",
+        # "iso",
+        # "torrent",
+        # "db",
+        # "rar",
+        # "cue",
+        # "idk",
+        # "log",
+        # "zip",
+        # "docx",
+        # "js",
+        # "rb",
+        # "md",
+        # "json",
+        # "uc",
+        # "html",
+        # "xnb",
+        # "svg",
+        # "",
     ]
     for (dirpath, _, filenames) in walk(DATA_PATH, followlinks=True):
         for filename in filenames:

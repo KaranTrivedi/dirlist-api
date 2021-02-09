@@ -21,14 +21,48 @@ from app.metrics.views import metrics_router
 
 origins = [
     "http://localhost:4200",
-    "http://192.168.0.16:4200"
+    "http://192.168.0.16:4200",
+    "http://192.168.0.16:4201"
+]
+
+tags_metadata = [
+    {
+        "name": "root",
+        "description": "Root router",
+    },
+    {
+        "name": "search",
+        "description": "Search related functions",
+        "externalDocs": {
+            "description": "Items external docs",
+            "url": "http://192.168.0.16:4200/search",
+        },
+    },
+    {
+        "name": "directory",
+        "description": "Unix Path related functions.",
+        "externalDocs": {
+            "description": "Items external docs",
+            "url": "http://192.168.0.16:4200/directory",
+        },
+    },
+    {
+        "name": "metrics",
+        "description": "Metrics related functions.",
+        "externalDocs": {
+            "description": "Items external docs",
+            "url": "http://192.168.0.16:4200/metrics",
+        },
+    },
 ]
 
 app = FastAPI(
     title="Dirslist Api",
     description="API for website",
-    version="0.1"
+    version="0.1",
+    openapi_tags=tags_metadata
 )
+
 
 app.include_router(root_router)
 app.include_router(directory_router, prefix="/directory")

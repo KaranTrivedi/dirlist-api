@@ -12,7 +12,7 @@ metrics_router = APIRouter()
 
 logger = logging.getLogger(__name__)
 
-@metrics_router.get("/temp")
+@metrics_router.get("/temp", tags=["metrics"])
 async def temp():
     """
     Return sensor temps

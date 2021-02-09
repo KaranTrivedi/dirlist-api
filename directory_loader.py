@@ -3,7 +3,6 @@
 Read dirs and folders into elasticsearch.
 """
 
-# DEFAULTS
 import configparser
 import datetime
 import logging
@@ -14,9 +13,11 @@ import pathlib
 import re
 from os import walk
 
+os.chdir("/home/karan/projects/dirlist-api")
+import libs.local_calls as local_calls
 import libs.elastic_calls as elastic_calls
 
-os.chdir("/home/karan/projects/dirlist-api")
+import start
 
 # Define config and logger.
 CONFIG = configparser.ConfigParser()
@@ -106,11 +107,11 @@ def main():
                     and re.match(r"[0-9]{1,3}", path.suffix[1:]) is None
                 ):
                 file_dict = {}
-                file_dict["index"] = "files"
+                file_dict["index"] = start.CONFIG["dir_loader"]["index"]
                 file_dict["name"] = filename
                 file_dict["parent"] = str(path.parent)[len(DATA_PATH):] + "/"
                 file_dict["path"] = str(path)[len(DATA_PATH):]
-                file_dict["url"] = IP + ":" + PORT + "/directory/" + \
+                file_dict["url"] = "http://" + start.IP + ":" + start.PORT + "/directory/" + \
                     str(path)[len(DATA_PATH):]
                 stats = path.stat()
                 file_dict["modify_time"] = stats.st_mtime*1000
@@ -118,7 +119,7 @@ def main():
                     int(stats.st_mtime)
                 ).strftime("%Y-%m-%dT%H:%M:%S%z")
                 file_dict["size"] = stats.st_size
-                file_dict["size_h"] = human_size(stats.st_size)
+                file_dict["size_h"] = local_calls.human_size(stats.st_size)
                 file_dict["ext"] = path.suffix[1:].lower()
 
                 files.append(file_dict)
@@ -127,9 +128,9 @@ def main():
         # break
 
     elastic = elastic_calls.elastic_connection()
-    elastic.indices.delete(index="files")
-
+    elastic.indices.delete(index=start.CONFIG["dir_loader"]["index"])
     elastic_calls.elastic_ingest(elastic=elastic, docs=files)
+
     sys.exit()
 
 if __name__ == "__main__":
