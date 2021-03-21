@@ -9,6 +9,10 @@ from pathlib import Path
 
 from fastapi import APIRouter
 
+import start
+
+DATA_PATH = start.CONFIG["global"]["data_path"]
+
 root_router = APIRouter()
 
 logger = logging.getLogger(__name__)
