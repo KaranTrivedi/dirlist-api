@@ -1,6 +1,8 @@
+
 tmp/
 data/
 directory/
+!app/directory/
 docs/
 
 # Byte-compiled / optimized / DLL files
