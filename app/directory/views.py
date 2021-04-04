@@ -10,6 +10,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from shutil import copyfile
+
 from fastapi import APIRouter
 from starlette.responses import FileResponse, StreamingResponse
 
@@ -18,7 +20,7 @@ import libs.local_calls as local_calls
 import start
 
 DATA_PATH = start.CONFIG["global"]["data_path"]
-DEST_PATH = "archives/1. Movies/dimid/hm/"
+MOVIE_PATH = "archives/1. Movies/"
 
 elastic = elastic_calls.elastic_connection()
 logger = logging.getLogger(__name__)
@@ -140,7 +142,53 @@ def get_entities(relative_path, full_path, dirs, query=""):
 
     return files, folders
 
+
+# def download(file_path):
+#     """
+#     Download file for given path.
+
+#     Args:
+#         file_path (string): Path to file.
+
+#     Returns:
+#         (StreamingResponse): chunks of data.
+#     """
+
+#     headers = {
+#     "Accept-Ranges": "bytes",
+#     "Content-Length": str(sz),
+#     "Content-Range": F"bytes {asked}-{sz-1}/{sz}",
+#     }
+#     response =  StreamingResponse(streaming_file(file_path, CS, asked), headers=headers)
+
+#     if os.path.isfile(file_path):
+#         file_like = open(file_path, mode="rb")
+#         return StreamingResponse(file_like)
+
 #ROUTES
+@directory_router.get("/tree/{relative_path:path}", tags=["directory"])
+async def get_tree(relative_path: str):
+
+    results = {}
+
+    relative_path, full_path = set_path(relative_path)
+
+    if os.path.isdir(full_path):
+        logger.debug("Path is dir.")
+        results["valid"] = True
+    else:
+        results["valid"] = False
+        return results
+
+    try:
+        dirs = [item for item in os.listdir(full_path) if os.path.isdir(full_path / item)]
+    except Exception as exp:
+        logger.exception(exp)
+        results["valid"] = False
+        return results
+
+    return dirs
+
 @directory_router.get("/folder/{relative_path:path}", tags=["directory"])
 async def get_dirs(relative_path: str, sort="asc", column="name", query=""):
     """
@@ -236,22 +284,31 @@ async def get_dirs(relative_path: str, sort="asc", column="name", query=""):
 
 @directory_router.get("/youtube-dl/{relative_path:path}", tags=["directory"])
 def youtube_dl(relative_path, url, name=""):
+    """
+    Download videos from URL
 
+    Args:
+        relative_path ([type]): Path to 
+        url ([type]): [description]
+        name (str, optional): [description]. Defaults to "".
+
+    Returns:
+        [type]: [description]
+    """
     # youtube-dl --extract-audio --audio-format mp3 --output "%(uploader)s%(title)s.%(ext)s" http://www.youtube.com/watch?v=rtOvBOTyX00
     relative_path, full_path = set_path(relative_path)
 
     command = ["youtube-dl", "-q", "--no-warnings"]
     if name:
-        name = DATA_PATH + relative_path + name + ".%(ext)s"
-        logger.info(url, name, relative_path)
-        return True
+        name = DATA_PATH + relative_path + "/" + name + ".%(ext)s"
     else:
-        name = DEST_PATH + "%(title)s.%(ext)s"
-    command += [ "-o" + name]
+        name = DATA_PATH + relative_path + "/" + "%(title)s.%(ext)s"
 
+    command += [ "-o" + str(name)]
     command += [url]
 
     logger.info(" ".join(command))
+
     output, error = subprocess.Popen(
         command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     ).communicate()
@@ -260,33 +317,49 @@ def youtube_dl(relative_path, url, name=""):
         logger.debug(f"command_output: {output.decode().strip()}")
 
     if not error:
-        return True
+        logger.info(url)
+        return None
+    # else:
+    #     pass
+    #     Attempt to upgrade youtube-dl here.
 
     logger.error(error.decode().replace("\n", " "))
     return error.decode()
 
+    return True
 
-# def download(file_path):
-#     """
-#     Download file for given path.
+@directory_router.get("/copy_file/{relative_path:path}", tags=["directory"])
+def copy_file(relative_path, filename, destname=""):
+    """
+    Copy files from give location to Movies folder.
 
-#     Args:
-#         file_path (string): Path to file.
+    Args:
+        relative_path ([type]): [description]
+        filename ([type]): [description]
+        destname (str, optional): [description]. Defaults to "".
 
-#     Returns:
-#         (StreamingResponse): chunks of data.
-#     """
+    Returns:
+        [type]: [description]
+    """
 
-#     headers = {
-#     "Accept-Ranges": "bytes",
-#     "Content-Length": str(sz),
-#     "Content-Range": F"bytes {asked}-{sz-1}/{sz}",
-#     }
-#     response =  StreamingResponse(streaming_file(file_path, CS, asked), headers=headers)
+    logger.info(filename)
+    logger.info(destname)
 
-#     if os.path.isfile(file_path):
-#         file_like = open(file_path, mode="rb")
-#         return StreamingResponse(file_like)
+    relative_path, full_path = set_path(relative_path)
+
+    if not destname:
+        destname = filename
+
+    src = str(full_path) + "/" + filename
+    dest = DATA_PATH + MOVIE_PATH + destname
+
+    try:
+        logger.info(dest)
+        copyfile(src, dest)
+    except Exception as exp:
+        logger.exception(exp)
+        return str(exp)
+    return "Done"
 
 @directory_router.get("/file/{relative_path:path}", tags=["directory"])
 async def get_file(relative_path):
