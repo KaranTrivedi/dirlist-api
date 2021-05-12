@@ -298,13 +298,13 @@ def youtube_dl(relative_path, url, name=""):
     # youtube-dl --extract-audio --audio-format mp3 --output "%(uploader)s%(title)s.%(ext)s" http://www.youtube.com/watch?v=rtOvBOTyX00
     relative_path, full_path = set_path(relative_path)
 
-    command = ["youtube-dl", "-q", "--no-warnings"]
+    command = ["youtube-dl"]
     if name:
         name = DATA_PATH + relative_path + "/" + name + ".%(ext)s"
     else:
         name = DATA_PATH + relative_path + "/" + "%(title)s.%(ext)s"
 
-    command += [ "-o" + str(name)]
+    command += ["-o", str(name)]
     command += [url]
 
     logger.info(" ".join(command))
