@@ -9,6 +9,7 @@ import logging
 
 import uvicorn
 
+
 # Define config and logger.
 CONFIG = configparser.ConfigParser()
 CONFIG.read('conf/config.ini')
@@ -40,7 +41,7 @@ log_config = {
         "access": {
             "()": "uvicorn.logging.AccessFormatter",
             "datefmt": "%Y-%m-%dT%H:%M:%S%z",
-            "fmt": '%(asctime)s::%(levelprefix)s %(client_addr)s - "%(request_line)s" %(msecs)d %(status_code)s',
+            "fmt": '%(asctime)s::%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
             "use_colors": False,
         },
     },
@@ -74,7 +75,10 @@ log_config = {
     }
 }
 
-if __name__ == "__main__":
+def main():
+    """
+    Main function
+    """
 
     uvicorn.run(
         app="app.main:app",
@@ -82,6 +86,17 @@ if __name__ == "__main__":
         port=int(PORT),
         reload=True,
         log_config=log_config,
-        # log_config=None,
         log_level="info"
     )
+
+    # gunicorn.run(
+    #     app="app.main:app",
+    #     host=IP,
+    #     port=int(PORT),
+    #     reload=True,
+    #     log_config=log_config,
+    #     log_level="info"
+    # )
+
+if __name__ == "__main__":
+    main()

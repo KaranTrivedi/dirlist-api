@@ -10,8 +10,8 @@ from fastapi.openapi.docs import (
     get_swagger_ui_html,
     get_swagger_ui_oauth2_redirect_html,
 )
-from fastapi.staticfiles import StaticFiles
 
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
 from app.directory.views import directory_router
@@ -20,10 +20,6 @@ from app.search.views import search_router
 from app.metrics.views import metrics_router
 
 # logging.config.fileConfig('conf/logging.conf', disable_existing_loggers=False)
-
-# log_listener = logging.config.listen(9030)
-# log_listener.start()
-
 # logging.config.fileConfig('conf/logging.ini', disable_existing_loggers=True)
 
 origins = [
@@ -70,13 +66,25 @@ tags_metadata = [
 #     openapi_tags=tags_metadata
 # )
 
-app = FastAPI(title="Dirslist Api", docs_url=None, redoc_url=None,openapi_tags=tags_metadata)
+# app = FastAPI(title="Dirslist Api", docs_url=None, redoc_url=None, openapi_tags=tags_metadata)
+app = FastAPI(title="Dirslist Api",\
+    openapi_tags=tags_metadata)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
+app.mount("/directory1/downloads", StaticFiles(directory="directory/downloads"), name="directory1/downloads")
+# app.mount("/directory1/documents", StaticFiles(directory="directory/documents"), name="directory1/documents")
+# app.mount("/directory1/archives", StaticFiles(directory="directory/downloads"), name="directory1/archives")
+app.mount("/directory1/media", StaticFiles(directory="directory/media"), name="directory1/media")
+app.mount("/directory1", StaticFiles(directory="directory"), name="directory1")
 
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
+    """
+    Trying to load in custom CSS file for docs pages.
+
+    Returns:
+        [type]: [description]
+    """
+
     return get_swagger_ui_html(
         openapi_url=app.openapi_url,
         title=app.title + " - Swagger UI",
@@ -85,14 +93,25 @@ async def custom_swagger_ui_html():
         swagger_css_url="/static/swagger-ui.css",
     )
 
-
 @app.get(app.swagger_ui_oauth2_redirect_url, include_in_schema=False)
 async def swagger_ui_redirect():
+    """
+    Trying to load in custom CSS file for docs pages.
+
+    Returns:
+        [type]: [description]
+    """
     return get_swagger_ui_oauth2_redirect_html()
 
 
 @app.get("/redoc", include_in_schema=False)
 async def redoc_html():
+    """
+    Trying to load in custom CSS file for docs pages.
+
+    Returns:
+        [type]: [description]
+    """
     return get_redoc_html(
         openapi_url=app.openapi_url,
         title=app.title + " - ReDoc",

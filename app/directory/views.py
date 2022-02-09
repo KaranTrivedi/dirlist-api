@@ -7,20 +7,21 @@ Api for getting files and folders in downloads and archives.
 import datetime
 import logging
 import os
-import subprocess
+import re
 from pathlib import Path
 
-from shutil import copyfile
+from shutil import copyfile, move
 
-from fastapi import APIRouter
-from starlette.responses import FileResponse, StreamingResponse
+from fastapi import APIRouter, HTTPException
+from starlette.responses import StreamingResponse
+import youtube_dl as yt
 
 import libs.elastic_calls as elastic_calls
 import libs.local_calls as local_calls
 import start
 
 DATA_PATH = start.CONFIG["global"]["data_path"]
-MOVIE_PATH = "archives/1. Movies/"
+MOVIE_PATH = "media/movies/"
 
 elastic = elastic_calls.elastic_connection()
 logger = logging.getLogger(__name__)
@@ -38,6 +39,7 @@ def set_path(relative_path):
     Returns:
         [type]: [description]
     """
+
     relative_path = relative_path.strip("/")
     logger.debug(f"Loc: {relative_path}")
 
@@ -168,7 +170,15 @@ def get_entities(relative_path, full_path, dirs, query=""):
 #ROUTES
 @directory_router.get("/tree/{relative_path:path}", tags=["directory"])
 async def get_tree(relative_path: str):
+    """
+    Get directory tree for path
 
+    Args:
+        relative_path (str): [description]
+
+    Returns:
+        [type]: [description]
+    """
     results = {}
 
     relative_path, full_path = set_path(relative_path)
@@ -206,7 +216,7 @@ async def get_dirs(relative_path: str, sort="asc", column="name", query=""):
 
     results = {}
 
-    # Get relative (formatted) and full path of given param. 
+    # Get relative (formatted) and full path of given param.
     relative_path, full_path = set_path(relative_path)
 
     if os.path.isdir(full_path):
@@ -282,51 +292,68 @@ async def get_dirs(relative_path: str, sort="asc", column="name", query=""):
 
     return results
 
+@directory_router.get("/format_name/", tags=["directory"])
+def format_file(filename):
+    """
+    Strips garbage from filenames.
+
+    Args:
+        filename (string): Raw file name
+
+    Returns:
+        [string]: new filename
+    """
+
+    numbers = re.compile(r'([0-9]{4})')
+
+    file_name = Path(filename)
+    name = file_name.stem
+    modified_name = name.replace("5.1", "").replace(".", " ").replace("_", " ")\
+        .replace("AC3", " ").replace(" 720p", "").replace(" BluRay", "")\
+        .replace(" HDRip", "").replace(" 1080p", "").replace(" x265", "").replace(" x264", "")\
+        .replace("Dual", "").replace("audio", "").replace("FLAC", "").replace("10bit", "")\
+        .replace("[", "").replace("]", "").replace("WEB", "").replace("HDR", "").replace("Rip", "")
+
+    modified_name = numbers.sub(r'(\1)', modified_name) + file_name.suffix.lower()
+
+    return modified_name
+
 @directory_router.get("/youtube-dl/{relative_path:path}", tags=["directory"])
 def youtube_dl(relative_path, url, name=""):
     """
     Download videos from URL
 
     Args:
-        relative_path ([type]): Path to 
+        relative_path ([type]): Path to directory
         url ([type]): [description]
         name (str, optional): [description]. Defaults to "".
 
     Returns:
         [type]: [description]
     """
+
     # youtube-dl --extract-audio --audio-format mp3 --output "%(uploader)s%(title)s.%(ext)s" http://www.youtube.com/watch?v=rtOvBOTyX00
-    relative_path, full_path = set_path(relative_path)
+    relative_path, _ = set_path(relative_path)
 
-    command = ["youtube-dl"]
+    logger.info(f"{DATA_PATH}{relative_path}")
+
     if name:
-        name = DATA_PATH + relative_path + "/" + name + ".%(ext)s"
+        name = f"{DATA_PATH}{relative_path}/{name}.%(ext)s"
     else:
-        name = DATA_PATH + relative_path + "/" + "%(title)s.%(ext)s"
+        name = f"{DATA_PATH}{relative_path}/%(title)s.%(ext)s"
 
-    command += ["-o", str(name)]
-    command += [url]
+    ydl_opts = {
+        "outtmpl": name,
+        "quiet": True
+    }
 
-    logger.info(" ".join(command))
-
-    output, error = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    ).communicate()
-
-    if output:
-        logger.debug(f"command_output: {output.decode().strip()}")
-
-    if not error:
-        logger.info(url)
-        return None
-    # else:
-    #     pass
-    #     Attempt to upgrade youtube-dl here.
-
-    logger.error(error.decode().replace("\n", " "))
-    return error.decode()
-
-    return True
+    with yt.YoutubeDL(ydl_opts) as ydl:
+        try:
+            ydl.download([url])
+            return None
+        except Exception as exp:
+            logger.info(exp)
+            raise HTTPException(status_code=400, detail=str(exp))
 
 @directory_router.get("/copy_file/{relative_path:path}", tags=["directory"])
 def copy_file(relative_path, filename, destname=""):
@@ -356,6 +383,39 @@ def copy_file(relative_path, filename, destname=""):
     try:
         logger.info(dest)
         copyfile(src, dest)
+    except Exception as exp:
+        logger.exception(exp)
+        return str(exp)
+    return "Done"
+
+@directory_router.get("/move_file/{relative_path:path}", tags=["directory"])
+def move_file(relative_path, filename, destname=""):
+    """
+    Move files from give location to Movies folder.
+
+    Args:
+        relative_path ([type]): [description]
+        filename ([type]): [description]
+        destname (str, optional): [description]. Defaults to "".
+
+    Returns:
+        [type]: [description]
+    """
+
+    logger.info(filename)
+    logger.info(destname)
+
+    relative_path, full_path = set_path(relative_path)
+
+    if not destname:
+        destname = filename
+
+    src = str(full_path) + "/" + filename
+    dest = DATA_PATH + MOVIE_PATH + destname
+
+    try:
+        logger.info(dest)
+        move(src, dest)
     except Exception as exp:
         logger.exception(exp)
         return str(exp)
