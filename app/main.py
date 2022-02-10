@@ -19,6 +19,9 @@ from app.root.views import root_router
 from app.search.views import search_router
 from app.metrics.views import metrics_router
 
+from asgi_logger import AccessLoggerMiddleware
+from starlette.middleware import Middleware
+
 # logging.config.fileConfig('conf/logging.conf', disable_existing_loggers=False)
 # logging.config.fileConfig('conf/logging.ini', disable_existing_loggers=True)
 
@@ -59,16 +62,11 @@ tags_metadata = [
     },
 ]
 
-# app = FastAPI(
-#     title="Dirslist Api",
-#     description="API for website",
-#     version="0.1",
-#     openapi_tags=tags_metadata
-# )
-
-# app = FastAPI(title="Dirslist Api", docs_url=None, redoc_url=None, openapi_tags=tags_metadata)
 app = FastAPI(title="Dirslist Api",\
-    openapi_tags=tags_metadata)
+        openapi_tags=tags_metadata,\
+        description="API for Dirlist Site",\
+        version="0.1",\
+        middleware=[Middleware(AccessLoggerMiddleware)])
 
 app.mount("/directory1/downloads", StaticFiles(directory="directory/downloads"), name="directory1/downloads")
 # app.mount("/directory1/documents", StaticFiles(directory="directory/documents"), name="directory1/documents")

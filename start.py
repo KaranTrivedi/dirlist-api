@@ -42,6 +42,7 @@ log_config = {
             "()": "uvicorn.logging.AccessFormatter",
             "datefmt": "%Y-%m-%dT%H:%M:%S%z",
             "fmt": '%(asctime)s::%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
+            # "fmt": AccessLoggerMiddleware(app, format="%(s)s")
             "use_colors": False,
         },
     },
@@ -88,15 +89,6 @@ def main():
         log_config=log_config,
         log_level="info"
     )
-
-    # gunicorn.run(
-    #     app="app.main:app",
-    #     host=IP,
-    #     port=int(PORT),
-    #     reload=True,
-    #     log_config=log_config,
-    #     log_level="info"
-    # )
 
 if __name__ == "__main__":
     main()
