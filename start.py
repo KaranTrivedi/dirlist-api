@@ -5,10 +5,8 @@ Start file for initiating uvicorn.
 """
 
 import configparser
-import logging
-
+import logging.config
 import uvicorn
-
 
 # Define config and logger.
 CONFIG = configparser.ConfigParser()
@@ -18,14 +16,14 @@ SECTION = "start"
 IP = CONFIG['global']["ip"]
 PORT = CONFIG['global']["port"]
 
-logging.basicConfig(
-    filename=CONFIG[SECTION]["default"],
-    level=CONFIG[SECTION]["level"],
-    format="%(asctime)s::%(levelname)s::%(name)s::%(funcName)s::%(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%S%z",
-)
-
 # logging.config.fileConfig('conf/logging.ini', disable_existing_loggers=True)
+
+# logging.basicConfig(
+#     filename=CONFIG[SECTION]["default"],
+#     level=CONFIG[SECTION]["level"],
+#     format="%(asctime)s::%(levelname)s::%(name)s::%(funcName)s::%(message)s",
+#     datefmt="%Y-%m-%dT%H:%M:%S%z",
+# )
 
 # ./venv/lib/python3.8/site-packages/uvicorn/config.py
 log_config = {
@@ -42,9 +40,8 @@ log_config = {
             "()": "uvicorn.logging.AccessFormatter",
             "datefmt": "%Y-%m-%dT%H:%M:%S%z",
             "fmt": '%(asctime)s::%(levelprefix)s %(client_addr)s - "%(request_line)s" %(status_code)s',
-            # "fmt": AccessLoggerMiddleware(app, format="%(s)s")
             "use_colors": False,
-        },
+        }
     },
     "handlers":
     {
@@ -69,17 +66,25 @@ log_config = {
     },
     "loggers":
     {
-        "uvicorn": {"handlers": ["default"], "level": "INFO", "propagate": False},
-        "uvicorn.error": {"handlers": ["error"], "level": "INFO", "propagate": False},
-        "uvicorn.asgi": {"handlers": ["error"], "level": "INFO", "propagate":   True},
-        "uvicorn.access": {"handlers": ["access"], "level": "INFO", "propagate": False},
+        "": {"handlers": ["default"], "level": "INFO"},
+        "uvicorn.error": {"handlers": ["default"], "level": "INFO", "propagate": False},
+        # "uvicorn.access": {"handlers": ["access"], "level": "INFO", "propagate": False},
     }
 }
+
+# logging.config.dictConfig(log_config)
 
 def main():
     """
     Main function
     """
+
+    # logging.basicConfig(
+    #     filename=CONFIG[SECTION]["default"],
+    #     level=CONFIG[SECTION]["level"],
+    #     format="%(asctime)s::%(levelname)s::%(name)s::%(funcName)s::%(message)s",
+    #     datefmt="%Y-%m-%dT%H:%M:%S%z",
+    # )
 
     uvicorn.run(
         app="app.main:app",

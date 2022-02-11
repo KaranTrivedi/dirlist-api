@@ -11,6 +11,8 @@ from fastapi.openapi.docs import (
     get_swagger_ui_oauth2_redirect_html,
 )
 
+import logging
+
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
 
@@ -22,8 +24,7 @@ from app.metrics.views import metrics_router
 from asgi_logger import AccessLoggerMiddleware
 from starlette.middleware import Middleware
 
-# logging.config.fileConfig('conf/logging.conf', disable_existing_loggers=False)
-# logging.config.fileConfig('conf/logging.ini', disable_existing_loggers=True)
+logger = logging.getLogger(__name__)
 
 origins = [
     "http://localhost:4200",
@@ -62,11 +63,15 @@ tags_metadata = [
     },
 ]
 
+
 app = FastAPI(title="Dirslist Api",\
         openapi_tags=tags_metadata,\
         description="API for Dirlist Site",\
-        version="0.1",\
-        middleware=[Middleware(AccessLoggerMiddleware)])
+        version="0.1",
+        # middleware=[Middleware(AccessLoggerMiddleware)]
+        )
+
+# AccessLoggerMiddleware(app, format='%(client_addr)s - "%(request_line)s" %(L)s %(B)s %(status_code)s')
 
 app.mount("/directory1/downloads", StaticFiles(directory="directory/downloads"), name="directory1/downloads")
 # app.mount("/directory1/documents", StaticFiles(directory="directory/documents"), name="directory1/documents")
@@ -130,18 +135,25 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# @app.on_event("startup")
-# async def startup_event():
-#     logging.config.fileConfig('conf/logging.ini', disable_existing_loggers=True)
+app.add_middleware(
+    AccessLoggerMiddleware,
+    format='%(client_addr)s - "%(request_line)s" %(L)s %(B)s %(status_code)s'
+)
 
-    # logging.basicConfig(
-    #     filename=start.CONFIG[start.SECTION]["default"],
-    #     level=start.CONFIG[start.SECTION]["level"],
-    #     format="%(asctime)s::%(levelname)s::%(name)s::%(funcName)s::%(message)s",
-    #     datefmt="%Y-%m-%dT%H:%M:%S%z",
-    # )
+@app.on_event("startup")
+async def startup_event():
+    """
+    startup ..
+    """
 
-# if __name__ != '__main__':
-    # logger = logging.getLogger('uvicorn')
-    # print(logger.name)
-    # print(logger.handlers)
+    logger.info("startup")
+
+# def main():
+#     """
+#     Main function
+#     """
+
+#     pass
+
+# if __name__== '__main__':
+#     main()
