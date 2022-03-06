@@ -59,16 +59,18 @@ log_config = {
         },
         "access":
         {
-            "formatter": "access",
-            "class": 'logging.FileHandler',
-            "filename": CONFIG[SECTION]["access"]
+            "class": 'logging.NullHandler'
+            # "formatter": "access",
+            # "class": 'logging.FileHandler',
+            # "filename": CONFIG[SECTION]["access"]
         },
     },
     "loggers":
     {
         "": {"handlers": ["default"], "level": "INFO"},
         "uvicorn.error": {"handlers": ["default"], "level": "INFO", "propagate": False},
-        # "uvicorn.access": {"handlers": ["access"], "level": "INFO", "propagate": False},
+        "uvicorn.access": {"handlers": ["access"], "level": "INFO", "propagate": False},
+        "asgi-logger": {"handlers": ["default"], "level": "INFO", "propagate": False},
     }
 }
 

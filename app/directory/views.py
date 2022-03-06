@@ -20,6 +20,8 @@ import libs.elastic_calls as elastic_calls
 import libs.local_calls as local_calls
 import start
 
+import timeit
+
 DATA_PATH = start.CONFIG["global"]["data_path"]
 MOVIE_PATH = "media/movies/"
 
@@ -75,7 +77,7 @@ def read_in_chunks(file_object, chunk_size=1024*1024):
 
 def get_entities(relative_path, full_path, dirs, query=""):
     """
-    Returns list of files and folders for a give path
+    Returns list of files and folders for a give path, loading from OS
 
     Args:
         relative_path ([type]): [description]
@@ -143,7 +145,6 @@ def get_entities(relative_path, full_path, dirs, query=""):
         ]
 
     return files, folders
-
 
 # def download(file_path):
 #     """
@@ -305,16 +306,19 @@ def format_file(filename):
     """
 
     numbers = re.compile(r'([0-9]{4})')
+    replace_vals = ["5.1", "-x0r", ".", "_", ",", "AC3", " 720p", " BluRay",\
+        " HDRip", " 1080p", " x265", " x264", "Dual", "audio", "FLAC", "10bit", "[",\
+        "]", "WEB", "HDR", "Rip"]
 
     file_name = Path(filename)
     name = file_name.stem
-    modified_name = name.replace("5.1", "").replace(".", " ").replace("_", " ")\
-        .replace("AC3", " ").replace(" 720p", "").replace(" BluRay", "")\
-        .replace(" HDRip", "").replace(" 1080p", "").replace(" x265", "").replace(" x264", "")\
-        .replace("Dual", "").replace("audio", "").replace("FLAC", "").replace("10bit", "")\
-        .replace("[", "").replace("]", "").replace("WEB", "").replace("HDR", "").replace("Rip", "")
+    for replace_val in replace_vals:
+        if replace_val == ".":
+            name = name.replace(replace_val, " ")
 
-    modified_name = numbers.sub(r'(\1)', modified_name) + file_name.suffix.lower()
+        name = name.replace(replace_val, "")
+
+    modified_name = numbers.sub(r'(\1)', name) + file_name.suffix.lower()
 
     return modified_name
 
@@ -381,11 +385,12 @@ def copy_file(relative_path, filename, destname=""):
     dest = DATA_PATH + MOVIE_PATH + destname
 
     try:
-        logger.info(dest)
         copyfile(src, dest)
+        # logger.info(src, dest)
     except Exception as exp:
         logger.exception(exp)
         return str(exp)
+
     return "Done"
 
 @directory_router.get("/move_file/{relative_path:path}", tags=["directory"])

@@ -137,7 +137,8 @@ app.add_middleware(
 
 app.add_middleware(
     AccessLoggerMiddleware,
-    format='%(client_addr)s - "%(request_line)s" %(L)s %(B)s %(status_code)s'
+    format='%(client_addr)s - "%(request_line)s" %(L)s %(B)s %(status_code)s',
+    logger=logging.getLogger("asgi-logger")
 )
 
 @app.on_event("startup")
