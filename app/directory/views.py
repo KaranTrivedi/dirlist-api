@@ -318,9 +318,13 @@ def format_file(filename):
 
         name = name.replace(replace_val, "")
 
-    modified_name = numbers.sub(r'(\1)', name) + file_name.suffix.lower()
+    modified_name = numbers.sub(r'(\1)', name)
 
-    return modified_name
+    return {
+        "full": modified_name + file_name.suffix.lower(),
+        "prefix": modified_name,
+        "suffix": file_name.suffix.lower()
+        }
 
 @directory_router.get("/youtube-dl/{relative_path:path}", tags=["directory"])
 def youtube_dl(relative_path, url, name=""):
@@ -373,8 +377,8 @@ def copy_file(relative_path, filename, destname=""):
         [type]: [description]
     """
 
-    logger.info(filename)
-    logger.info(destname)
+    # logger.info(filename)
+    # logger.info(destname)
 
     relative_path, full_path = set_path(relative_path)
 
