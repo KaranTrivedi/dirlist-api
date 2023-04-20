@@ -8,19 +8,20 @@ import datetime
 import logging
 import os
 import re
+import json
 from pathlib import Path
 
 from shutil import copyfile, move
 
 from fastapi import APIRouter, HTTPException
 from starlette.responses import StreamingResponse
-import youtube_dl as yt
 
 import libs.elastic_calls as elastic_calls
 import libs.local_calls as local_calls
 import start
-
-import timeit
+import yt_dlp
+from time import sleep
+from queue import LifoQueue, Empty
 
 DATA_PATH = start.CONFIG["global"]["data_path"]
 MOVIE_PATH = "media/movies/"
@@ -29,6 +30,8 @@ elastic = elastic_calls.elastic_connection()
 logger = logging.getLogger(__name__)
 
 directory_router = APIRouter()
+
+TMP_KEYS = []
 
 #FUNCTIONS
 def set_path(relative_path):
@@ -168,6 +171,23 @@ def get_entities(relative_path, full_path, dirs, query=""):
 #         file_like = open(file_path, mode="rb")
 #         return StreamingResponse(file_like)
 
+def yt_dlp_hook(download):
+    """
+    Youtube download Hook
+
+    Args:
+        download (_type_): _description_
+    """
+
+    global TMP_KEYS
+
+    if download.keys() != TMP_KEYS:
+        logger.info(f'Status: {download["status"]}')
+        logger.info(f'Dict Keys: {download.keys()}')
+        TMP_KEYS = download.keys()
+        # logger.info(download)
+        # logger.info(json.dumps(download, indent=2))
+
 #ROUTES
 @directory_router.get("/tree/{relative_path:path}", tags=["directory"])
 async def get_tree(relative_path: str):
@@ -180,6 +200,7 @@ async def get_tree(relative_path: str):
     Returns:
         [type]: [description]
     """
+
     results = {}
 
     relative_path, full_path = set_path(relative_path)
@@ -293,7 +314,7 @@ async def get_dirs(relative_path: str, sort="asc", column="name", query=""):
 
     return results
 
-@directory_router.get("/format_name/", tags=["directory"])
+@directory_router.get("/format_name", tags=["directory"])
 def format_file(filename):
     """
     Strips garbage from filenames.
@@ -308,7 +329,7 @@ def format_file(filename):
     numbers = re.compile(r'([0-9]{4})')
     replace_vals = ["5.1", "-x0r", ".", "_", ",", "AC3", " 720p", " BluRay",\
         " HDRip", " 1080p", " x265", " x264", "Dual", "audio", "FLAC", "10bit", "[",\
-        "]", "WEB", "HDR", "Rip"]
+        "]", " WEB", " HDR", " Rip", " 10Bit", " H265-d3g", " AMZN-DL", " DDP2", " 264-EVO"]
 
     file_name = Path(filename)
     name = file_name.stem
@@ -335,12 +356,13 @@ def youtube_dl(relative_path, url, name=""):
         relative_path ([type]): Path to directory
         url ([type]): [description]
         name (str, optional): [description]. Defaults to "".
-
+    
     Returns:
         [type]: [description]
     """
 
     # youtube-dl --extract-audio --audio-format mp3 --output "%(uploader)s%(title)s.%(ext)s" http://www.youtube.com/watch?v=rtOvBOTyX00
+
     relative_path, _ = set_path(relative_path)
 
     logger.info(f"{DATA_PATH}{relative_path}")
@@ -352,16 +374,35 @@ def youtube_dl(relative_path, url, name=""):
 
     ydl_opts = {
         "outtmpl": name,
-        "quiet": True
+        # "quiet": True
+        "logger": logger,
+        "progress_hooks": [yt_dlp_hook],
+        # "force-overwrites": True
     }
 
-    with yt.YoutubeDL(ydl_opts) as ydl:
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         try:
-            ydl.download([url])
-            return None
+            return ydl.download([url])
         except Exception as exp:
             logger.info(exp)
-            raise HTTPException(status_code=400, detail=str(exp))
+            return str(exp)
+
+@directory_router.get("/youtube-dl-info", tags=["directory"])
+def youtube_dl(url):
+    """
+    Show vid info.
+    """
+
+    ydl_opts = {}
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        try:
+            info = ydl.extract_info(url, download=False)
+        except Exception as exp:
+            logger.exception(exp)
+            return 
+
+    # ℹ️ ydl.sanitize_info makes the info json-serializable
+    return ydl.sanitize_info(info)
 
 @directory_router.get("/copy_file/{relative_path:path}", tags=["directory"])
 def copy_file(relative_path, filename, destname=""):
@@ -389,7 +430,7 @@ def copy_file(relative_path, filename, destname=""):
     dest = DATA_PATH + MOVIE_PATH + destname
 
     try:
-        copyfile(src, dest)
+        copyfile(src, dest) 
         # logger.info(src, dest)
     except Exception as exp:
         logger.exception(exp)

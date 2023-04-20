@@ -17,6 +17,10 @@
             {
                 "title": "error",
                 "pattern": "logs/error.log"
+            },
+            {
+                "title": "syslog",
+                "pattern": "logs/syslog-error.log"
             }
         ]
 

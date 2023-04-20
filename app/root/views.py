@@ -19,10 +19,22 @@ logger = logging.getLogger(__name__)
 
 @root_router.get("/health", tags=["root"])
 def health():
+    """
+    Returns true if API healthy.
+
+    Returns:
+        _type_: _description_
+    """
     return {"heathy" : True}
 
 @root_router.get("/test", tags=["root"])
 def test():
+    """
+    "Touch" file.
+
+    Returns:
+        _type_: _description_
+    """
     logger.info(Path(__file__).parent.absolute())
     try:
         (Path("data") / "downloads"/ "test.txt").touch()
