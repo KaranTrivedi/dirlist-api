@@ -8,20 +8,18 @@ import datetime
 import logging
 import os
 import re
-import json
 from pathlib import Path
-
 from shutil import copyfile, move
 
+import yt_dlp
 from fastapi import APIRouter, HTTPException
 from starlette.responses import StreamingResponse
 
 import libs.elastic_calls as elastic_calls
 import libs.local_calls as local_calls
 import start
-import yt_dlp
-from time import sleep
-from queue import LifoQueue, Empty
+
+# from time import sleep
 
 DATA_PATH = start.CONFIG["global"]["data_path"]
 MOVIE_PATH = "media/movies/"
@@ -185,6 +183,9 @@ def yt_dlp_hook(download):
         logger.info(f'Status: {download["status"]}')
         logger.info(f'Dict Keys: {download.keys()}')
         TMP_KEYS = download.keys()
+
+        # Why not yield data?
+
         # logger.info(download)
         # logger.info(json.dumps(download, indent=2))
 
@@ -348,17 +349,18 @@ def format_file(filename):
         }
 
 @directory_router.get("/youtube-dl/{relative_path:path}", tags=["directory"])
-def youtube_dl(relative_path, url, name=""):
+async def youtube_dl(relative_path, url, name=""):
     """
-    Download videos from URL
+    This route accepts URL of a video and its name along with unix relative path,
+    and then uses yt_dlp to download file to given location with name.
 
     Args:
-        relative_path ([type]): Path to directory
-        url ([type]): [description]
-        name (str, optional): [description]. Defaults to "".
-    
+        relative_path (_type_): unix-like path for where file is to be saved.
+        url (_type_): url of video to be downloaded
+        name (str, optional): Name of file to be saved.
+
     Returns:
-        [type]: [description]
+        _type_: _description_
     """
 
     # youtube-dl --extract-audio --audio-format mp3 --output "%(uploader)s%(title)s.%(ext)s" http://www.youtube.com/watch?v=rtOvBOTyX00
@@ -372,23 +374,27 @@ def youtube_dl(relative_path, url, name=""):
     else:
         name = f"{DATA_PATH}{relative_path}/%(title)s.%(ext)s"
 
+    def download_progress_hook(progress):
+        if progress["status"] == "finished":
+            # buffer.close()
+            yield 100
+        else:
+            logger.info(f"{progress['_percent_str']}")
+            yield f"{progress['_percent_str']}"
+
     ydl_opts = {
         "outtmpl": name,
-        # "quiet": True
-        "logger": logger,
-        "progress_hooks": [yt_dlp_hook],
-        # "force-overwrites": True
+        'format': 'best',
+        'progress_hooks': [download_progress_hook]
     }
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        try:
-            return ydl.download([url])
-        except Exception as exp:
-            logger.info(exp)
-            return str(exp)
+
+        return StreamingResponse(ydl.extract_info(url))
+
 
 @directory_router.get("/youtube-dl-info", tags=["directory"])
-def youtube_dl(url):
+def youtube_dl_info(url):
     """
     Show vid info.
     """

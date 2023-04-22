@@ -1,6 +1,5 @@
 [MASTER]
 
-optimize-ast=no
 extension-pkg-whitelist=cv2,moviepy.editor
 disable=logging-fstring-interpolation
 

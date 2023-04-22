@@ -4,7 +4,7 @@
 File to load dirs and files into elastic for search.
 """
 
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from fastapi.openapi.docs import (
     get_redoc_html,
     get_swagger_ui_html,
@@ -12,6 +12,9 @@ from fastapi.openapi.docs import (
 )
 
 import logging
+
+import asyncio
+
 
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.cors import CORSMiddleware
@@ -21,6 +24,7 @@ from app.root.views import root_router
 from app.search.views import search_router
 from app.metrics.views import metrics_router
 from app.mailer.views import mailer_router
+from app.download.views import download_router
 
 from asgi_logger import AccessLoggerMiddleware
 from starlette.middleware import Middleware
@@ -71,6 +75,8 @@ app = FastAPI(
         version="0.1",
         # middleware=[Middleware(AccessLoggerMiddleware)]
     )
+
+app.connections = []
 
 # AccessLoggerMiddleware(app, format='%(client_addr)s - "%(request_line)s" %(L)s %(B)s %(status_code)s')
 
@@ -129,6 +135,7 @@ app.include_router(directory_router, prefix="/directory")
 app.include_router(search_router, prefix="/search")
 app.include_router(metrics_router, prefix="/metrics")
 app.include_router(mailer_router, prefix="/mailer")
+app.include_router(download_router, prefix="/download")
 
 app.add_middleware(
     CORSMiddleware,
@@ -144,22 +151,13 @@ app.add_middleware(
     logger=logging.getLogger("asgi-logger")
 )
 
-@app.on_event("startup")
-async def startup_event():
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
     """
-    startup ..
+    ??
+
+    Args:
+        websocket (WebSocket): _description_
     """
-
-    # Could send an email here, or perform custom event.
-
-    logger.info("startup")
-
-# def main():
-#     """
-#     Main function
-#     """
-
-#     pass
-
-# if __name__== '__main__':
-#     main()
+    await websocket.accept()
+    app.connections.append(websocket)

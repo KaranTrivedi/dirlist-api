@@ -92,7 +92,8 @@ def main():
         app="app.main:app",
         host=IP,
         port=int(PORT),
-        reload=False,
+        # reload=False,
+        reload=True,
         log_config=log_config,
         log_level="info"
     )

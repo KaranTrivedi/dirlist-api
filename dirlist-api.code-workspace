@@ -23,6 +23,5 @@
                 "pattern": "logs/syslog-error.log"
             }
         ]
-
 	}
 }
